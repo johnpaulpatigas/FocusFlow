@@ -1,15 +1,22 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthCard from "../components/AuthCard";
 import GoogleButton from "../components/GoogleButton";
 import InputField from "../components/InputField";
 import PageWrapper from "../components/PageWrapper";
 
 const SignupPage = () => {
+  const navigate = useNavigate();
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    navigate("/dashboard");
+  };
+
   return (
     <PageWrapper>
       <div className="flex min-h-screen items-center justify-center bg-slate-900 p-4">
         <AuthCard title="Sign Up">
-          <form className="space-y-5">
+          <form className="space-y-5" onSubmit={handleLogin}>
             <InputField type="text" placeholder="First Name" />
             <InputField type="text" placeholder="Last Name" />
             <InputField type="email" placeholder="Email" />

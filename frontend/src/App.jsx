@@ -5,6 +5,7 @@ import { EdgeToEdge } from "@capawesome/capacitor-android-edge-to-edge-support";
 import { AnimatePresence } from "motion/react";
 import { useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
+import DashboardPage from "./pages/DashboardPage";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -41,6 +42,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
     </AnimatePresence>
   );
