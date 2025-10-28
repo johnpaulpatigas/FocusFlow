@@ -12,5 +12,7 @@ public class MainActivity extends BridgeActivity {
 
         WebView webview = getBridge().getWebView();
         webview.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
+        webview.setVerticalScrollBarEnabled(false);
+        webview.setHorizontalScrollBarEnabled(false);
     }
 }
