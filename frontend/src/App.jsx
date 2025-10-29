@@ -6,6 +6,7 @@ import { AnimatePresence } from "motion/react";
 import { useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import DashboardPage from "./pages/DashboardPage";
+import FocusPage from "./pages/FocusPage";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -45,6 +46,7 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/tasks" element={<TaskPage />} />
+        <Route path="/focus" element={<FocusPage />} />
       </Routes>
     </AnimatePresence>
   );
