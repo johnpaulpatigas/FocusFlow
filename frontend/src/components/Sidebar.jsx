@@ -7,7 +7,7 @@ import TaskIcon from "../assets/icons/task.svg?react";
 
 const navItems = [
   { icon: DashboardIcon, name: "Dashboard", path: "/dashboard" },
-  { icon: TaskIcon, name: "Task", path: "/tasks" },
+  { icon: TaskIcon, name: "Tasks", path: "/tasks" },
   { icon: FocusIcon, name: "Focus", path: "/focus" },
   { icon: ProgressIcon, name: "Progress", path: "/progress" },
   { icon: ProfileIcon, name: "Profile", path: "/profile" },
@@ -43,7 +43,7 @@ const NavLink = ({ icon, name, path, isActive }) => {
   );
 };
 
-const Sidebar = () => {
+const Sidebar = ({ currentPath }) => {
   return (
     <aside className="flex min-h-screen w-64 flex-col bg-slate-800 p-6">
       <div className="mb-10 text-2xl font-bold text-slate-100">
@@ -53,7 +53,7 @@ const Sidebar = () => {
         <ul className="space-y-3">
           {navItems.map((item) => (
             <li key={item.name}>
-              <NavLink {...item} isActive={item.name === "Dashboard"} />
+              <NavLink {...item} isActive={item.path === currentPath} />
             </li>
           ))}
         </ul>

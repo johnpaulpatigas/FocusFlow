@@ -2,28 +2,25 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import Dashboard from "../components/Dashboard";
 import MobileHeader from "../components/MobileHeader";
 import PageWrapper from "../components/PageWrapper";
 import Sidebar from "../components/Sidebar";
+import TaskManagement from "../components/TaskManagement";
 
 const sidebarVariants = {
   open: { x: 0 },
   closed: { x: "-100%" },
 };
-
 const overlayVariants = {
   open: { opacity: 1 },
   closed: { opacity: 0 },
 };
 
-const DashboardPage = () => {
+const TaskPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
     <PageWrapper>
@@ -43,7 +40,6 @@ const DashboardPage = () => {
                 onClick={toggleSidebar}
                 className="fixed inset-0 z-30 bg-black/50 md:hidden"
               />
-
               <motion.div
                 variants={sidebarVariants}
                 initial="closed"
@@ -60,11 +56,11 @@ const DashboardPage = () => {
 
         <div className="flex flex-1 flex-col">
           <MobileHeader onMenuClick={toggleSidebar} />
-          <Dashboard />
+          <TaskManagement />
         </div>
       </div>
     </PageWrapper>
   );
 };
 
-export default DashboardPage;
+export default TaskPage;
