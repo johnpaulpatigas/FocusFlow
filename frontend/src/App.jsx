@@ -9,6 +9,7 @@ import DashboardPage from "./pages/DashboardPage";
 import FocusPage from "./pages/FocusPage";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
+import ProfilePage from "./pages/ProfilePage";
 import ProgressPage from "./pages/ProgressPage";
 import SignupPage from "./pages/SignupPage";
 import TaskPage from "./pages/TaskPage";
@@ -49,6 +50,7 @@ function App() {
         <Route path="/tasks" element={<TaskPage />} />
         <Route path="/focus" element={<FocusPage />} />
         <Route path="/progress" element={<ProgressPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </AnimatePresence>
   );
