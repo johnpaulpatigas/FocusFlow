@@ -1,15 +1,48 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthCard from "../components/AuthCard";
 import GoogleButton from "../components/GoogleButton";
 import InputField from "../components/InputField";
 import PageWrapper from "../components/PageWrapper";
+import { useAuth } from "../context/AuthContext";
+import useApi from "../hooks/useApi";
 
 const LoginPage = () => {
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const { post, loading, error: apiError } = useApi();
 
-  const handleLogin = (e) => {
+  const handleChange = (e) => {
+    if (error) setError("");
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setError("");
+
+    if (!formData.email || !formData.password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    try {
+      const response = await post("/login", {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (response.session) {
+        login(response.session);
+        navigate("/dashboard");
+      } else {
+        setError("Login failed. Please try again.");
+      }
+    } catch {
+      setError(apiError || "Invalid credentials. Please try again.");
+    }
   };
 
   return (
@@ -17,13 +50,31 @@ const LoginPage = () => {
       <div className="flex min-h-screen items-center justify-center bg-slate-900 p-4">
         <AuthCard title="Log In">
           <form className="space-y-5" onSubmit={handleLogin}>
-            <InputField type="email" placeholder="Email" />
-            <InputField type="password" placeholder="Password" />
+            <InputField
+              type="email"
+              placeholder="Email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
+            <InputField
+              type="password"
+              placeholder="Password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+            />
+
+            {error && (
+              <p className="text-center text-sm text-red-400">{error}</p>
+            )}
+
             <button
               type="submit"
-              className="w-full rounded-lg bg-cyan-500 py-3 font-bold text-white transition-colors duration-300 hover:bg-cyan-600"
+              className="w-full rounded-lg bg-cyan-500 py-3 font-bold text-white transition-colors duration-300 hover:bg-cyan-600 disabled:opacity-50"
+              disabled={loading}
             >
-              Log in
+              {loading ? "Logging in..." : "Log in"}
             </button>
           </form>
           <div className="mt-6 text-center text-sm text-slate-400">
