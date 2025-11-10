@@ -1,5 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import apiClient from "../api/axios";
 import Avatar from "../assets/avatar.svg";
 import BellIcon from "../assets/icons/bell.svg?react";
 import CameraIcon from "../assets/icons/camera.svg?react";
@@ -38,6 +40,9 @@ const SettingsItem = ({ icon, label, children }) => {
 };
 
 const UserProfile = () => {
+  const [profile, setProfile] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -54,6 +59,32 @@ const UserProfile = () => {
       transition: { type: "spring", stiffness: 100 },
     },
   };
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await apiClient.get("/profile");
+        setProfile(response.data);
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="p-10 text-center text-white">Loading profile...</div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="p-10 text-center text-white">Could not load profile.</div>
+    );
+  }
 
   return (
     <main className="flex-1 bg-slate-900 p-6 md:p-10">
@@ -87,12 +118,14 @@ const UserProfile = () => {
               </div>
               <div className="text-center sm:text-left">
                 <div className="flex items-center justify-center gap-2 sm:justify-start">
-                  <h3 className="text-2xl font-bold text-white">John Doe</h3>
+                  <h3 className="text-2xl font-bold text-white">
+                    {profile.first_name || "User"} {profile.last_name || ""}
+                  </h3>
                   <button className="text-slate-400 hover:text-white">
                     <EditIcon className="h-4 w-4" />
                   </button>
                 </div>
-                <p className="text-slate-400">johndoe@gmail.com</p>
+                <p className="text-slate-400">{profile.email}</p>
               </div>
             </div>
             <form className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
