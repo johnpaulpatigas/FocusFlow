@@ -33,11 +33,27 @@ const authMiddleware = async (req, res, next) => {
 };
 
 app.post("/signup", async (req, res) => {
-  const { email, password } = req.body;
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { email, password, firstName, lastName } = req.body;
 
-  if (error) return res.status(400).json({ error: error.message });
-  return res.status(201).json({ user: data.user });
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  if (authError) return res.status(400).json({ error: authError.message });
+  if (!authData.user)
+    return res.status(500).json({ error: "User not created" });
+
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .update({ first_name: firstName, last_name: lastName })
+    .eq("id", authData.user.id);
+
+  if (profileError) {
+    console.error("Profile update failed:", profileError.message);
+  }
+
+  return res.status(201).json(authData);
 });
 
 app.post("/login", async (req, res) => {
@@ -49,6 +65,23 @@ app.post("/login", async (req, res) => {
 
   if (error) return res.status(400).json({ error: error.message });
   return res.status(200).json({ session: data.session });
+});
+
+app.get("/profile", authMiddleware, async (req, res) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("first_name, last_name, study_year, major, avatar_url")
+    .eq("id", req.user.id)
+    .single();
+
+  if (error) return res.status(400).json({ error: error.message });
+
+  const profileData = {
+    ...data,
+    email: req.user.email,
+  };
+
+  return res.status(200).json(profileData);
 });
 
 app.get("/tasks", authMiddleware, async (req, res) => {
