@@ -6,6 +6,7 @@ import { AnimatePresence } from "motion/react";
 import { useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RedirectIfAuth from "./components/RedirectIfAuth";
 import DashboardPage from "./pages/DashboardPage";
 import FocusPage from "./pages/FocusPage";
 import LandingPage from "./pages/LandingPage";
@@ -44,9 +45,30 @@ function App() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+        <Route
+          path="/"
+          element={
+            <RedirectIfAuth>
+              <LandingPage />
+            </RedirectIfAuth>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <RedirectIfAuth>
+              <LoginPage />
+            </RedirectIfAuth>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <RedirectIfAuth>
+              <SignupPage />
+            </RedirectIfAuth>
+          }
+        />
 
         <Route
           path="/dashboard"
