@@ -84,6 +84,44 @@ app.get("/profile", authMiddleware, async (req, res) => {
   return res.status(200).json(profileData);
 });
 
+app.get("/dashboard-stats", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const today = new Date().toISOString().split("T")[0];
+
+    const { count: tasksDueToday, error: tasksError } = await supabase
+      .from("tasks")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("deadline", today)
+      .neq("status", "Completed");
+
+    const { data: upcomingTasks, error: upcomingError } = await supabase
+      .from("tasks")
+      .select("name, deadline")
+      .eq("user_id", userId)
+      .neq("status", "Completed")
+      .order("deadline", { ascending: true })
+      .limit(2);
+
+    const { data: weeklyFocusData, error: weeklyFocusError } =
+      await supabase.rpc("get_weekly_focus_hours", { user_id_param: userId });
+
+    if (tasksError || upcomingError || weeklyFocusError) {
+      throw tasksError || upcomingError || weeklyFocusError;
+    }
+
+    return res.status(200).json({
+      tasksDueToday: tasksDueToday || 0,
+      upcomingTasks: upcomingTasks || [],
+      currentStreak: 5,
+      weeklyFocusHours: weeklyFocusData || [],
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
 app.get("/tasks", authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from("tasks")
