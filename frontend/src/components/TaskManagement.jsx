@@ -1,8 +1,10 @@
 /* eslint-disable no-unused-vars */
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
 import CalendarIcon from "../assets/icons/calendar.svg?react";
+import FocusIcon from "../assets/icons/focus.svg?react";
 import MoreIcon from "../assets/icons/more-horizontal.svg?react";
 import AddTaskModal from "./AddTaskModal";
 
@@ -21,28 +23,45 @@ const PriorityBadge = ({ priority }) => {
   );
 };
 
-const TaskRow = ({ task }) => (
-  <div className="grid grid-cols-12 items-center gap-4 border-b border-slate-700 p-4 last:border-b-0">
-    <div className="col-span-12 truncate text-slate-200 md:col-span-4">
-      {task.name}
+const TaskRow = ({ task }) => {
+  const navigate = useNavigate();
+
+  const handleStartFocus = () => {
+    navigate("/focus", { state: { taskId: task.id, taskName: task.name } });
+  };
+
+  return (
+    <div className="grid grid-cols-12 items-center gap-4 border-b border-slate-700 p-4 last:border-b-0">
+      <div className="col-span-12 truncate text-slate-200 md:col-span-4">
+        {task.name}
+      </div>
+      <div className="col-span-6 text-slate-400 md:col-span-2">
+        {task.deadline}
+      </div>
+      <div className="col-span-6 md:col-span-2">
+        <PriorityBadge priority={task.priority} />
+      </div>
+      <div className="col-span-6 text-slate-400 md:col-span-2">
+        {task.category}
+      </div>
+      <div className="col-span-5 text-slate-400 md:col-span-1">
+        {task.status}
+      </div>
+      <div className="col-span-1 flex justify-end gap-4 text-right">
+        <button
+          onClick={handleStartFocus}
+          className="p-1 text-slate-400 transition-colors hover:text-cyan-400"
+          title="Start focus session for this task"
+        >
+          <FocusIcon className="h-5 w-5" />
+        </button>
+        <button className="p-1 text-slate-400 hover:text-white">
+          <MoreIcon className="h-5 w-5" />
+        </button>
+      </div>
     </div>
-    <div className="col-span-6 text-slate-400 md:col-span-2">
-      {task.deadline}
-    </div>
-    <div className="col-span-6 md:col-span-2">
-      <PriorityBadge priority={task.priority} />
-    </div>
-    <div className="col-span-6 text-slate-400 md:col-span-2">
-      {task.category}
-    </div>
-    <div className="col-span-5 text-slate-400 md:col-span-1">{task.status}</div>
-    <div className="col-span-1 text-right">
-      <button className="text-slate-400 hover:text-white">
-        <MoreIcon className="h-5 w-5" />
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 const TaskManagement = () => {
   const [tasks, setTasks] = useState([]);
