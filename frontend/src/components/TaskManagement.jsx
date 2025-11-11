@@ -5,8 +5,9 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
 import CalendarIcon from "../assets/icons/calendar.svg?react";
 import FocusIcon from "../assets/icons/focus.svg?react";
-import MoreIcon from "../assets/icons/more-horizontal.svg?react";
+import TrashIcon from "../assets/icons/trash.svg?react";
 import AddTaskModal from "./AddTaskModal";
+import Checkbox from "./Checkbox";
 
 const PriorityBadge = ({ priority }) => {
   const styles = {
@@ -23,17 +24,30 @@ const PriorityBadge = ({ priority }) => {
   );
 };
 
-const TaskRow = ({ task }) => {
+const TaskRow = ({ task, onUpdateStatus, onDelete }) => {
   const navigate = useNavigate();
+  const isCompleted = task.status === "Completed";
+
+  const handleCheckboxChange = () => {
+    const newStatus = isCompleted ? "Pending" : "Completed";
+    onUpdateStatus(task.id, newStatus);
+  };
 
   const handleStartFocus = () => {
     navigate("/focus", { state: { taskId: task.id, taskName: task.name } });
   };
 
   return (
-    <div className="grid grid-cols-12 items-center gap-4 border-b border-slate-700 p-4 last:border-b-0">
-      <div className="col-span-12 truncate text-slate-200 md:col-span-4">
-        {task.name}
+    <div
+      className={`grid grid-cols-12 items-center gap-4 border-b border-slate-700 p-4 last:border-b-0 ${isCompleted ? "opacity-50" : ""}`}
+    >
+      <div className="col-span-12 flex items-center gap-4 md:col-span-4">
+        <Checkbox checked={isCompleted} onChange={handleCheckboxChange} />
+        <span
+          className={`truncate text-slate-200 ${isCompleted ? "line-through" : ""}`}
+        >
+          {task.name}
+        </span>
       </div>
       <div className="col-span-6 text-slate-400 md:col-span-2">
         {task.deadline}
@@ -47,7 +61,7 @@ const TaskRow = ({ task }) => {
       <div className="col-span-5 text-slate-400 md:col-span-1">
         {task.status}
       </div>
-      <div className="col-span-1 flex justify-end gap-4 text-right">
+      <div className="col-span-1 flex justify-end gap-2 text-right">
         <button
           onClick={handleStartFocus}
           className="p-1 text-slate-400 transition-colors hover:text-cyan-400"
@@ -55,8 +69,12 @@ const TaskRow = ({ task }) => {
         >
           <FocusIcon className="h-5 w-5" />
         </button>
-        <button className="p-1 text-slate-400 hover:text-white">
-          <MoreIcon className="h-5 w-5" />
+        <button
+          onClick={() => onDelete(task.id)}
+          className="p-1 text-slate-400 transition-colors hover:text-red-500"
+          title="Delete task"
+        >
+          <TrashIcon className="h-5 w-5" />
         </button>
       </div>
     </div>
@@ -82,6 +100,32 @@ const TaskManagement = () => {
 
     fetchTasks();
   }, []);
+
+  const handleUpdateStatus = async (taskId, newStatus) => {
+    try {
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === taskId ? { ...task, status: newStatus } : task,
+        ),
+      );
+      await apiClient.put(`/tasks/${taskId}`, { status: newStatus });
+    } catch (error) {
+      console.error("Failed to update task status:", error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      try {
+        setTasks((currentTasks) =>
+          currentTasks.filter((task) => task.id !== taskId),
+        );
+        await apiClient.delete(`/tasks/${taskId}`);
+      } catch (error) {
+        console.error("Failed to delete task:", error);
+      }
+    }
+  };
 
   const handleTaskAdded = (newTask) => {
     setTasks([newTask, ...tasks]);
@@ -150,7 +194,14 @@ const TaskManagement = () => {
               {isLoading ? (
                 <p className="p-4 text-center">Loading tasks...</p>
               ) : tasks.length > 0 ? (
-                tasks.map((task) => <TaskRow key={task.id} task={task} />)
+                tasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onUpdateStatus={handleUpdateStatus}
+                    onDelete={handleDeleteTask}
+                  />
+                ))
               ) : (
                 <p className="p-4 text-center">
                   No tasks yet. Add one to get started!
