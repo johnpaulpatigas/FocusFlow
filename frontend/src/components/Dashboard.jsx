@@ -1,5 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import apiClient from "../api/axios";
 
 const StatCard = ({ title, value, unit }) => (
   <div className="rounded-lg bg-slate-800 p-6">
@@ -37,15 +39,49 @@ const ChartBar = ({ day, hours, maxHours, percentage }) => (
 );
 
 const Dashboard = () => {
-  const weeklyData = [
-    { day: "Mon", hours: 12.5, maxHours: 24 },
-    { day: "Tue", hours: 5.2, maxHours: 24 },
-    { day: "Wed", hours: 10, maxHours: 24 },
-    { day: "Thu", hours: 3, maxHours: 24 },
-    { day: "Fri", hours: 8, maxHours: 24 },
-    { day: "Sat", hours: 8.24, maxHours: 24 },
-    { day: "Sun", hours: 9, maxHours: 24 },
-  ];
+  const [stats, setStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { data } = await apiClient.get("/dashboard-stats");
+        setStats(data);
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="p-10 text-center text-white">Loading dashboard...</div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="p-10 text-center text-white">
+        Could not load dashboard data. Please try again later.
+      </div>
+    );
+  }
+
+  const formatChartData = (weeklyData) => {
+    return weeklyData.map((d) => ({
+      day: d.day_of_week,
+      hours: d.total_minutes / 60,
+      maxHours: 4,
+      get percentage() {
+        return (this.hours / this.maxHours) * 100;
+      },
+    }));
+  };
+
+  const chartData = formatChartData(stats.weeklyFocusHours);
 
   return (
     <main className="flex-1 overflow-y-auto p-6 text-white md:p-10">
@@ -57,8 +93,12 @@ const Dashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <StatCard title="Tasks Due Today" value="0" />
-        <StatCard title="Current Streak" value="5" unit="Days" />
+        <StatCard title="Tasks Due Today" value={stats.tasksDueToday} />
+        <StatCard
+          title="Current Streak"
+          value={stats.currentStreak}
+          unit="Days"
+        />
         <div className="flex flex-col justify-between rounded-lg bg-slate-800 p-6">
           <p className="font-semibold text-slate-200">Focus Sessions</p>
           <button className="mt-4 self-start rounded-lg bg-cyan-500 px-4 py-2 font-bold text-white transition-colors hover:bg-cyan-600">
@@ -78,8 +118,17 @@ const Dashboard = () => {
           <p className="text-sm text-slate-400">Dates</p>
         </div>
         <div className="space-y-3">
-          <TaskItem title="Complete math homework" date="2025-11-15" />
-          <TaskItem title="Research history project" date="2025-10-20" />
+          {stats.upcomingTasks.length > 0 ? (
+            stats.upcomingTasks.map((task) => (
+              <TaskItem
+                key={task.name}
+                title={task.name}
+                date={task.deadline}
+              />
+            ))
+          ) : (
+            <p className="p-4 text-center text-slate-400">No upcoming tasks!</p>
+          )}
         </div>
         <button className="mt-6 w-full rounded-lg bg-slate-700 px-6 py-3 font-bold text-slate-300 transition-colors hover:bg-slate-600">
           View All Tasks
@@ -94,13 +143,13 @@ const Dashboard = () => {
       >
         <h2 className="mb-6 text-xl font-semibold">Weekly Focus Hours</h2>
         <div className="grid grid-cols-7 gap-4">
-          {weeklyData.map((d) => (
+          {chartData.map((d) => (
             <ChartBar
               key={d.day}
               day={d.day}
               hours={d.hours}
               maxHours={d.maxHours}
-              percentage={(d.hours / d.maxHours) * 100}
+              percentage={d.percentage}
             />
           ))}
         </div>
