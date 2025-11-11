@@ -118,6 +118,32 @@ app.post("/tasks", authMiddleware, async (req, res) => {
   return res.status(201).json(data[0]);
 });
 
+app.post("/focus-sessions", authMiddleware, async (req, res) => {
+  const { duration_minutes, task_id } = req.body;
+
+  if (!duration_minutes || duration_minutes <= 0) {
+    return res.status(400).json({ error: "Valid duration is required." });
+  }
+
+  const { data, error } = await supabase
+    .from("focus_sessions")
+    .insert([
+      {
+        user_id: req.user.id,
+        duration_minutes,
+        task_id: task_id || null,
+      },
+    ])
+    .select();
+
+  if (error) {
+    console.error("Failed to save focus session:", error);
+    return res.status(400).json({ error: error.message });
+  }
+
+  return res.status(201).json(data[0]);
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
