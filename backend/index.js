@@ -220,6 +220,42 @@ app.post("/focus-sessions", authMiddleware, async (req, res) => {
   return res.status(201).json(data[0]);
 });
 
+app.get("/progress-stats", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { data: weeklyFocus, error: focusError } = await supabase.rpc(
+      "get_weekly_focus_hours",
+      { user_id_param: userId },
+    );
+
+    const { data: tasksCompleted, error: tasksError } = await supabase.rpc(
+      "get_tasks_completed_last_7_days",
+      { user_id_param: userId },
+    );
+
+    const { data: streak, error: streakError } = await supabase.rpc(
+      "calculate_streak",
+      { user_id_param: userId },
+    );
+
+    if (focusError || tasksError || streakError) {
+      throw focusError || tasksError || streakError;
+    }
+
+    return res.status(200).json({
+      weeklyFocusHours: weeklyFocus || [],
+      tasksCompletedOverTime: tasksCompleted || [],
+      studyStreak: streak || 0,
+      totalTasks: 42,
+      completedTasks: 36,
+    });
+  } catch (error) {
+    console.error("Error fetching progress stats:", error);
+    return res.status(400).json({ error: error.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
