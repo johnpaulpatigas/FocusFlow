@@ -1,3 +1,4 @@
+// index.js
 import { createClient } from "@supabase/supabase-js";
 import cors from "cors";
 import dotenv from "dotenv";

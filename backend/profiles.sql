@@ -1,3 +1,4 @@
+-- profiles.sql
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   first_name TEXT,
