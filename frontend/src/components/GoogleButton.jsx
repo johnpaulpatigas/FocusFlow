@@ -1,3 +1,4 @@
+// src/components/GoogleButton.jsx
 import GoogleIcon from "../assets/google-icon.svg";
 
 const GoogleButton = ({ text }) => {

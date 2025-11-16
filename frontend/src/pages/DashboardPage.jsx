@@ -1,3 +1,4 @@
+// src/pages/DashboardPage.jsx
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";

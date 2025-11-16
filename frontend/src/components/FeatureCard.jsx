@@ -1,3 +1,4 @@
+// src/components/FeatureCard.jsx
 const FeatureCard = ({ title, description, bgColor, iconSrc }) => {
   return (
     <div className="flex cursor-pointer flex-col gap-4 rounded-xl bg-[#1B5E6F]/70 p-6 transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-xl hover:shadow-cyan-400/20">

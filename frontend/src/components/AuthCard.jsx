@@ -1,3 +1,4 @@
+// src/components/AuthCard.jsx
 const AuthCard = ({ title, children }) => {
   return (
     <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-800/50 p-8 shadow-lg backdrop-blur-sm">

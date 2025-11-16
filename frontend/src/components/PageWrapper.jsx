@@ -1,3 +1,4 @@
+// src/components/PageWrapper.jsx
 /* eslint-disable no-unused-vars */
 import { motion } from "motion/react";
 

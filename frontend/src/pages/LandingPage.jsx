@@ -1,3 +1,4 @@
+// src/pages/LandingPage.jsx
 /* eslint-disable no-unused-vars */
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";

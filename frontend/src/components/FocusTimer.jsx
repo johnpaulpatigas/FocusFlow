@@ -1,3 +1,4 @@
+// src/components/FocusTimer.jsx
 /* eslint-disable no-unused-vars */
 import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";

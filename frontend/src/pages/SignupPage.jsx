@@ -1,3 +1,4 @@
+// src/pages/SignupPage.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthCard from "../components/AuthCard";

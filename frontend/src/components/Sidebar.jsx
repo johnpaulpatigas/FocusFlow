@@ -1,3 +1,4 @@
+// src/components/Sidebar.jsx
 import { Link } from "react-router-dom";
 import DashboardIcon from "../assets/icons/dashboard.svg?react";
 import FocusIcon from "../assets/icons/focus.svg?react";

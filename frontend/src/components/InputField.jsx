@@ -1,3 +1,4 @@
+// src/components/InputField.jsx
 const InputField = ({ type, placeholder, value, name, onChange }) => {
   return (
     <input

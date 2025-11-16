@@ -1,3 +1,4 @@
+// src/components/Checkbox.jsx
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "motion/react";
 import CheckIcon from "../assets/icons/check.svg?react";

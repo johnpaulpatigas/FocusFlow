@@ -1,3 +1,4 @@
+// src/components/MobileHeader.jsx
 import MenuIcon from "../assets/icons/menu.svg?react";
 
 const MobileHeader = ({ onMenuClick }) => {
