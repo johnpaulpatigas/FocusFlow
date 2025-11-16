@@ -6,8 +6,7 @@ import { EdgeToEdge } from "@capawesome/capacitor-android-edge-to-edge-support";
 import { AnimatePresence } from "motion/react";
 import { useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
-import ProtectedRoute from "./components/ProtectedRoute";
-import RedirectIfAuth from "./components/RedirectIfAuth";
+import RouteGuard from "./components/RouteGuard";
 import DashboardPage from "./pages/DashboardPage";
 import FocusPage from "./pages/FocusPage";
 import LandingPage from "./pages/LandingPage";
@@ -49,66 +48,66 @@ function App() {
         <Route
           path="/"
           element={
-            <RedirectIfAuth>
+            <RouteGuard redirectIfAuth>
               <LandingPage />
-            </RedirectIfAuth>
+            </RouteGuard>
           }
         />
         <Route
           path="/login"
           element={
-            <RedirectIfAuth>
+            <RouteGuard redirectIfAuth>
               <LoginPage />
-            </RedirectIfAuth>
+            </RouteGuard>
           }
         />
         <Route
           path="/signup"
           element={
-            <RedirectIfAuth>
+            <RouteGuard redirectIfAuth>
               <SignupPage />
-            </RedirectIfAuth>
+            </RouteGuard>
           }
         />
 
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <RouteGuard requireAuth>
               <DashboardPage />
-            </ProtectedRoute>
+            </RouteGuard>
           }
         />
         <Route
           path="/tasks"
           element={
-            <ProtectedRoute>
+            <RouteGuard requireAuth>
               <TaskPage />
-            </ProtectedRoute>
+            </RouteGuard>
           }
         />
         <Route
           path="/focus"
           element={
-            <ProtectedRoute>
+            <RouteGuard requireAuth>
               <FocusPage />
-            </ProtectedRoute>
+            </RouteGuard>
           }
         />
         <Route
           path="/progress"
           element={
-            <ProtectedRoute>
+            <RouteGuard requireAuth>
               <ProgressPage />
-            </ProtectedRoute>
+            </RouteGuard>
           }
         />
         <Route
           path="/profile"
           element={
-            <ProtectedRoute>
+            <RouteGuard requireAuth>
               <ProfilePage />
-            </ProtectedRoute>
+            </RouteGuard>
           }
         />
       </Routes>
