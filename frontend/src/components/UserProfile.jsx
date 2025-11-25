@@ -4,11 +4,8 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import apiClient from "../api/axios";
 import Avatar from "../assets/avatar.svg";
-import BellIcon from "../assets/icons/bell.svg?react";
 import CameraIcon from "../assets/icons/camera.svg?react";
 import EditIcon from "../assets/icons/edit.svg?react";
-import GlobeIcon from "../assets/icons/globe.svg?react";
-import ListIcon from "../assets/icons/list.svg?react";
 import LockIcon from "../assets/icons/lock.svg?react";
 import LogoutIcon from "../assets/icons/log-out.svg?react";
 import SettingsIcon from "../assets/icons/settings.svg?react";
@@ -186,14 +183,6 @@ const UserProfile = () => {
                   readOnly
                 />
               </div>
-              <SettingsItem icon={BellIcon} label="Receive Email Notifications">
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-cyan-600 focus:ring-cyan-500 focus:ring-offset-slate-800"
-                />
-              </SettingsItem>
-              <SettingsItem icon={GlobeIcon} label="Language" />
-              <SettingsItem icon={ListIcon} label="Activity log" />
               <SettingsItem icon={LockIcon} label="Change Password" />
               <SettingsItem icon={LogoutIcon} label="Log out" />
             </div>
