@@ -108,14 +108,19 @@ app.get("/dashboard-stats", authMiddleware, async (req, res) => {
     const { data: weeklyFocusData, error: weeklyFocusError } =
       await supabase.rpc("get_weekly_focus_hours", { user_id_param: userId });
 
-    if (tasksError || upcomingError || weeklyFocusError) {
-      throw tasksError || upcomingError || weeklyFocusError;
+    const { data: streak, error: streakError } = await supabase.rpc(
+      "calculate_streak",
+      { user_id_param: userId },
+    );
+
+    if (tasksError || upcomingError || weeklyFocusError || streakError) {
+      throw tasksError || upcomingError || weeklyFocusError || streakError;
     }
 
     return res.status(200).json({
       tasksDueToday: tasksDueToday || 0,
       upcomingTasks: upcomingTasks || [],
-      currentStreak: 5,
+      currentStreak: streak || 0,
       weeklyFocusHours: weeklyFocusData || [],
     });
   } catch (error) {
