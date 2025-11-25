@@ -2,6 +2,7 @@
 /* eslint-disable no-unused-vars */
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
 
 const StatCard = ({ title, value, unit }) => (
@@ -42,6 +43,7 @@ const ChartBar = ({ day, hours, maxHours, percentage }) => (
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -102,7 +104,10 @@ const Dashboard = () => {
         />
         <div className="flex flex-col justify-between rounded-lg bg-slate-800 p-6">
           <p className="font-semibold text-slate-200">Focus Sessions</p>
-          <button className="mt-4 self-start rounded-lg bg-cyan-500 px-4 py-2 font-bold text-white transition-colors hover:bg-cyan-600">
+          <button
+            onClick={() => navigate("/focus")}
+            className="mt-4 self-start rounded-lg bg-cyan-500 px-4 py-2 font-bold text-white transition-colors hover:bg-cyan-600"
+          >
             Start Focus Session
           </button>
         </div>
@@ -131,7 +136,10 @@ const Dashboard = () => {
             <p className="p-4 text-center text-slate-400">No upcoming tasks!</p>
           )}
         </div>
-        <button className="mt-6 w-full rounded-lg bg-slate-700 px-6 py-3 font-bold text-slate-300 transition-colors hover:bg-slate-600">
+        <button
+          onClick={() => navigate("/tasks")}
+          className="mt-6 w-full rounded-lg bg-slate-700 px-6 py-3 font-bold text-slate-300 transition-colors hover:bg-slate-600"
+        >
           View All Tasks
         </button>
       </motion.div>
