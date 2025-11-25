@@ -129,11 +129,15 @@ app.get("/dashboard-stats", authMiddleware, async (req, res) => {
 });
 
 app.get("/tasks", authMiddleware, async (req, res) => {
-  const { data, error } = await supabase
-    .from("tasks")
-    .select("*")
-    .eq("user_id", req.user.id)
-    .order("created_at", { ascending: false });
+  const { status } = req.query;
+
+  let query = supabase.from("tasks").select("*").eq("user_id", req.user.id);
+
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error) return res.status(400).json({ error: error.message });
   return res.status(200).json(data);
