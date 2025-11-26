@@ -41,12 +41,33 @@ const ControlButton = ({ children, variant = "secondary", onClick }) => {
 const FocusTimer = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const task = location.state;
+
+  const [selectedTask, setSelectedTask] = useState(location.state || null);
+  const [availableTasks, setAvailableTasks] = useState([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
 
   const [minutes, setMinutes] = useState(DEFAULT_MINUTES);
   const [seconds, setSeconds] = useState(DEFAULT_SECONDS);
   const [isActive, setIsActive] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+
+  useEffect(() => {
+    if (!selectedTask) {
+      const fetchPendingTasks = async () => {
+        try {
+          const { data } = await apiClient.get("/tasks?status=Pending");
+          setAvailableTasks(data);
+        } catch (error) {
+          console.error("Failed to fetch pending tasks:", error);
+        } finally {
+          setIsLoadingTasks(false);
+        }
+      };
+      fetchPendingTasks();
+    } else {
+      setIsLoadingTasks(false);
+    }
+  }, [selectedTask]);
 
   const handleSessionEnd = useCallback(async () => {
     setIsActive(false);
@@ -58,7 +79,7 @@ const FocusTimer = () => {
     try {
       await apiClient.post("/focus-sessions", {
         duration_minutes: DEFAULT_MINUTES,
-        task_id: task?.taskId,
+        task_id: selectedTask?.taskId,
       });
       console.log("Focus session saved!");
     } catch (error) {
@@ -66,12 +87,10 @@ const FocusTimer = () => {
     }
 
     navigate("/tasks");
-  }, [isMuted, task, navigate]);
+  }, [selectedTask, navigate, isMuted]);
 
   useEffect(() => {
-    if (!isActive) {
-      return;
-    }
+    if (!isActive) return;
 
     if (minutes === 0 && seconds === 0) {
       handleSessionEnd();
@@ -90,6 +109,17 @@ const FocusTimer = () => {
     return () => clearInterval(interval);
   }, [isActive, seconds, minutes, handleSessionEnd]);
 
+  const handleTaskSelect = (taskId) => {
+    if (taskId) {
+      const task = availableTasks.find((t) => t.id === parseInt(taskId));
+      if (task) {
+        setSelectedTask({ taskId: task.id, taskName: task.name });
+      }
+    } else {
+      setSelectedTask(null);
+    }
+  };
+
   const toggleTimer = () => setIsActive(!isActive);
 
   const resetTimer = () => {
@@ -97,6 +127,45 @@ const FocusTimer = () => {
     setMinutes(DEFAULT_MINUTES);
     setSeconds(DEFAULT_SECONDS);
   };
+
+  if (!selectedTask) {
+    return (
+      <main className="flex-1 p-6 md:p-10">
+        <h1 className="mb-8 text-3xl font-bold text-slate-100">Focus</h1>
+        <div className="mx-auto w-full max-w-lg rounded-lg bg-slate-800 p-8">
+          <h2 className="mb-4 text-xl font-semibold text-white">
+            Select a task to focus on
+          </h2>
+          {isLoadingTasks ? (
+            <p className="text-slate-400">Loading tasks...</p>
+          ) : availableTasks.length > 0 ? (
+            <select
+              onChange={(e) => handleTaskSelect(e.target.value)}
+              defaultValue=""
+              className="w-full rounded-lg border border-slate-600 bg-slate-700 p-3 text-slate-200"
+            >
+              <option value="">-- Please choose a task --</option>
+              {availableTasks.map((task) => (
+                <option key={task.id} value={task.id}>
+                  {task.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div>
+              <p className="mb-4 text-slate-400">You have no pending tasks.</p>
+              <button
+                onClick={() => navigate("/tasks")}
+                className="rounded-lg bg-cyan-500 px-6 py-2 font-bold text-white transition-colors hover:bg-cyan-600"
+              >
+                Create a Task
+              </button>
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 p-6 md:p-10">
@@ -109,10 +178,12 @@ const FocusTimer = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {task && (
+          {selectedTask && (
             <div className="mb-4 text-center">
               <p className="text-slate-400">Focusing on:</p>
-              <p className="text-xl font-bold text-cyan-400">{task.taskName}</p>
+              <p className="text-xl font-bold text-cyan-400">
+                {selectedTask.taskName}
+              </p>
             </div>
           )}
 
