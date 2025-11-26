@@ -255,16 +255,51 @@ app.get("/progress-stats", authMiddleware, async (req, res) => {
       { user_id_param: userId },
     );
 
-    if (focusError || tasksError || streakError) {
-      throw focusError || tasksError || streakError;
+    const { count: completedTasksCount, error: completedCountError } =
+      await supabase
+        .from("tasks")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("status", "Completed");
+
+    const { data: focusStats, error: focusStatsError } = await supabase
+      .from("focus_sessions")
+      .select("duration_minutes")
+      .eq("user_id", userId);
+
+    if (
+      focusError ||
+      tasksError ||
+      streakError ||
+      completedCountError ||
+      focusStatsError
+    ) {
+      throw (
+        focusError ||
+        tasksError ||
+        streakError ||
+        completedCountError ||
+        focusStatsError
+      );
     }
+
+    const totalFocusSessions = focusStats.length;
+    const totalFocusMinutes = focusStats.reduce(
+      (sum, session) => sum + session.duration_minutes,
+      0,
+    );
+
+    const earnedBadges = [];
+    if (totalFocusSessions > 0) earnedBadges.push("Focus Starter");
+    if (streak >= 3) earnedBadges.push("3-Day Streak");
+    if (completedTasksCount >= 10) earnedBadges.push("Task Master");
+    if (totalFocusMinutes >= 500) earnedBadges.push("Marathon Runner");
 
     return res.status(200).json({
       weeklyFocusHours: weeklyFocus || [],
       tasksCompletedOverTime: tasksCompleted || [],
       studyStreak: streak || 0,
-      totalTasks: 42,
-      completedTasks: 36,
+      earnedBadges: earnedBadges,
     });
   } catch (error) {
     console.error("Error fetching progress stats:", error);
