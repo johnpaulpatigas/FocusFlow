@@ -8,6 +8,7 @@ import FocusIcon from "../assets/icons/focus.svg?react";
 import TrashIcon from "../assets/icons/trash.svg?react";
 import AddTaskModal from "./AddTaskModal";
 import Checkbox from "./Checkbox";
+import TaskActionsDropdown from "./TaskActionsDropdown";
 
 const PriorityBadge = ({ priority }) => {
   const styles = {
@@ -24,7 +25,7 @@ const PriorityBadge = ({ priority }) => {
   );
 };
 
-const TaskRow = ({ task, onUpdateStatus, onDelete }) => {
+const TaskRow = ({ task, onUpdateStatus, onEdit, onDelete }) => {
   const navigate = useNavigate();
   const isCompleted = task.status === "Completed";
 
@@ -69,13 +70,10 @@ const TaskRow = ({ task, onUpdateStatus, onDelete }) => {
         >
           <FocusIcon className="h-5 w-5" />
         </button>
-        <button
-          onClick={() => onDelete(task.id)}
-          className="p-1 text-slate-400 transition-colors hover:text-red-500"
-          title="Delete task"
-        >
-          <TrashIcon className="h-5 w-5" />
-        </button>
+        <TaskActionsDropdown
+          onEdit={() => onEdit(task)}
+          onDelete={() => onDelete(task.id)}
+        />
       </div>
     </div>
   );
@@ -106,6 +104,7 @@ const TaskManagement = () => {
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState(null);
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
 
@@ -152,6 +151,29 @@ const TaskManagement = () => {
     }
   };
 
+  const handleTaskUpdated = (updatedTask) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === updatedTask.id ? updatedTask : task,
+      ),
+    );
+  };
+
+  const openAddTaskModal = () => {
+    setTaskToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditTaskModal = (task) => {
+    setTaskToEdit(task);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setTaskToEdit(null);
+  };
+
   const handleDeleteTask = async (taskId) => {
     if (window.confirm("Are you sure you want to delete this task?")) {
       setTasks((currentTasks) =>
@@ -177,7 +199,7 @@ const TaskManagement = () => {
             Tasks
           </h1>
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={openAddTaskModal}
             className="rounded-lg bg-cyan-500 px-5 py-2 font-bold text-white transition-colors hover:bg-cyan-600"
           >
             Add Task
@@ -240,6 +262,7 @@ const TaskManagement = () => {
                     key={task.id}
                     task={task}
                     onUpdateStatus={handleUpdateStatus}
+                    onEdit={openEditTaskModal}
                     onDelete={handleDeleteTask}
                   />
                 ))
@@ -255,8 +278,10 @@ const TaskManagement = () => {
 
       <AddTaskModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeModal}
         onTaskAdded={handleTaskAdded}
+        onTaskUpdated={handleTaskUpdated}
+        taskToEdit={taskToEdit}
       />
     </>
   );
