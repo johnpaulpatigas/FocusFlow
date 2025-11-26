@@ -111,7 +111,7 @@ const FocusTimer = () => {
 
   const handleTaskSelect = (taskId) => {
     if (taskId) {
-      const task = availableTasks.find((t) => t.id === parseInt(taskId));
+      const task = availableTasks.find((t) => t.id === taskId);
       if (task) {
         setSelectedTask({ taskId: task.id, taskName: task.name });
       }
