@@ -1,10 +1,9 @@
 // src/components/TaskManagement.jsx
 /* eslint-disable no-unused-vars */
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
-import CalendarIcon from "../assets/icons/calendar.svg?react";
 import FocusIcon from "../assets/icons/focus.svg?react";
 import TrashIcon from "../assets/icons/trash.svg?react";
 import AddTaskModal from "./AddTaskModal";
@@ -18,7 +17,7 @@ const PriorityBadge = ({ priority }) => {
   };
   return (
     <span
-      className={`rounded-full px-3 py-1 text-sm font-medium ${styles[priority]}`}
+      className={`rounded-full px-3 py-1 text-sm font-medium ${styles[priority] || styles["Medium"]}`}
     >
       {priority}
     </span>
@@ -82,10 +81,38 @@ const TaskRow = ({ task, onUpdateStatus, onDelete }) => {
   );
 };
 
+const FilterTabs = ({ currentFilter, onFilterChange }) => {
+  const filters = ["All", "Pending", "Completed"];
+  return (
+    <div className="mb-6 flex space-x-2 border-b border-slate-700 sm:space-x-4">
+      {filters.map((filter) => (
+        <button
+          key={filter}
+          onClick={() => onFilterChange(filter)}
+          className={`px-3 py-2 text-sm font-semibold transition-colors sm:px-4 sm:text-base ${
+            currentFilter === filter
+              ? "border-b-2 border-cyan-500 text-cyan-500"
+              : "border-b-2 border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          {filter}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 const TaskManagement = () => {
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+
+  const categories = useMemo(
+    () => ["All", ...new Set(tasks.map((task) => task.category))],
+    [tasks],
+  );
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -102,13 +129,23 @@ const TaskManagement = () => {
     fetchTasks();
   }, []);
 
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const statusMatch =
+        statusFilter === "All" || task.status === statusFilter;
+      const categoryMatch =
+        categoryFilter === "All" || task.category === categoryFilter;
+      return statusMatch && categoryMatch;
+    });
+  }, [tasks, statusFilter, categoryFilter]);
+
   const handleUpdateStatus = async (taskId, newStatus) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, status: newStatus } : task,
+      ),
+    );
     try {
-      setTasks((currentTasks) =>
-        currentTasks.map((task) =>
-          task.id === taskId ? { ...task, status: newStatus } : task,
-        ),
-      );
       await apiClient.put(`/tasks/${taskId}`, { status: newStatus });
     } catch (error) {
       console.error("Failed to update task status:", error);
@@ -117,10 +154,10 @@ const TaskManagement = () => {
 
   const handleDeleteTask = async (taskId) => {
     if (window.confirm("Are you sure you want to delete this task?")) {
+      setTasks((currentTasks) =>
+        currentTasks.filter((task) => task.id !== taskId),
+      );
       try {
-        setTasks((currentTasks) =>
-          currentTasks.filter((task) => task.id !== taskId),
-        );
         await apiClient.delete(`/tasks/${taskId}`);
       } catch (error) {
         console.error("Failed to delete task:", error);
@@ -141,45 +178,48 @@ const TaskManagement = () => {
           </h1>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="rounded-lg bg-cyan-500 px-5 py-2 font-bold text-white transition-colors hover:bg-cyan-600 sm:hidden"
+            className="rounded-lg bg-cyan-500 px-5 py-2 font-bold text-white transition-colors hover:bg-cyan-600"
           >
             Add Task
           </button>
         </div>
 
         <motion.div
-          className="rounded-lg bg-slate-800 p-6"
+          className="rounded-lg bg-slate-800 p-4 sm:p-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="mb-6 flex flex-col items-center justify-between gap-4 md:flex-row">
+          <div className="mb-2 flex flex-col items-center justify-between gap-4 md:flex-row">
             <h2 className="self-start text-xl font-semibold text-slate-200 md:self-center">
               My Tasks
             </h2>
-            <div className="flex w-full flex-col items-center gap-4 sm:flex-row md:w-auto">
-              <select className="w-full rounded-lg border border-slate-600 bg-slate-700 p-2 text-slate-300 sm:w-auto">
-                <option>All Categories</option>
-                <option>Study</option>
-                <option>Work</option>
-                <option>Personal</option>
-              </select>
-              <div className="relative w-full sm:w-auto">
-                <input
-                  type="text"
-                  placeholder="mm/dd/yyyy"
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700 p-2 pr-10 pl-4 text-slate-300"
-                />
-                <CalendarIcon className="absolute top-1/2 right-3 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              </div>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="hidden rounded-lg bg-cyan-500 px-5 py-2 font-bold text-white transition-colors hover:bg-cyan-600 sm:block"
+            <div className="flex w-full items-center gap-4 md:w-auto">
+              <label
+                htmlFor="category-filter"
+                className="shrink-0 font-medium text-slate-400"
               >
-                Add Task
-              </button>
+                Category:
+              </label>
+              <select
+                id="category-filter"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full rounded-lg border border-slate-600 bg-slate-700 p-2 text-slate-200"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
+
+          <FilterTabs
+            currentFilter={statusFilter}
+            onFilterChange={setStatusFilter}
+          />
 
           <div>
             <div className="hidden grid-cols-12 gap-4 border-b-2 border-slate-700 p-4 font-semibold text-slate-400 md:grid">
@@ -194,8 +234,8 @@ const TaskManagement = () => {
             <div>
               {isLoading ? (
                 <p className="p-4 text-center">Loading tasks...</p>
-              ) : tasks.length > 0 ? (
-                tasks.map((task) => (
+              ) : filteredTasks.length > 0 ? (
+                filteredTasks.map((task) => (
                   <TaskRow
                     key={task.id}
                     task={task}
@@ -204,8 +244,8 @@ const TaskManagement = () => {
                   />
                 ))
               ) : (
-                <p className="p-4 text-center">
-                  No tasks yet. Add one to get started!
+                <p className="p-8 text-center text-slate-400">
+                  No tasks match the current filters.
                 </p>
               )}
             </div>
