@@ -31,12 +31,29 @@ const Card = ({ title, children, className = "" }) => (
   </div>
 );
 
-const AchievementBadge = ({ Icon, title }) => (
-  <div className="flex flex-col items-center gap-2 text-center">
+const allBadges = [
+  { id: "Focus Starter", Icon: FocusStarterIcon, title: "Focus Starter" },
+  { id: "3-Day Streak", Icon: StreakIcon, title: "3-Day Streak" },
+  { id: "Task Master", Icon: TaskMasterIcon, title: "Task Master" },
+  { id: "Marathon Runner", Icon: MarathonIcon, title: "Marathon Runner" },
+];
+
+const AchievementBadge = ({ Icon, title, isEarned }) => (
+  <div
+    className={`flex flex-col items-center gap-2 text-center transition-opacity ${
+      isEarned ? "opacity-100" : "opacity-30"
+    }`}
+  >
     <div className="flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20">
       <Icon className="h-full w-full" />
     </div>
-    <p className="text-sm font-semibold text-slate-300">{title}</p>
+    <p
+      className={`text-sm font-semibold ${
+        isEarned ? "text-slate-300" : "text-slate-500"
+      }`}
+    >
+      {title}
+    </p>
   </div>
 );
 
@@ -193,10 +210,14 @@ const ProgressTracker = () => {
         <motion.div variants={itemVariants} className="lg:col-span-2">
           <Card title="Achievement Badges">
             <div className="grid grid-cols-2 gap-4 py-4 sm:grid-cols-4 sm:gap-8">
-              <AchievementBadge Icon={FocusStarterIcon} title="Focus Starter" />
-              <AchievementBadge Icon={StreakIcon} title="3-Day Streak" />
-              <AchievementBadge Icon={TaskMasterIcon} title="Task Master" />
-              <AchievementBadge Icon={MarathonIcon} title="Marathon Runner" />
+              {allBadges.map((badge) => (
+                <AchievementBadge
+                  key={badge.id}
+                  Icon={badge.Icon}
+                  title={badge.title}
+                  isEarned={stats.earnedBadges.includes(badge.id)}
+                />
+              ))}
             </div>
           </Card>
         </motion.div>
