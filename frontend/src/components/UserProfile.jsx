@@ -9,6 +9,7 @@ import EditIcon from "../assets/icons/edit.svg?react";
 import LockIcon from "../assets/icons/lock.svg?react";
 import LogoutIcon from "../assets/icons/log-out.svg?react";
 import SettingsIcon from "../assets/icons/settings.svg?react";
+import { useAuth } from "../context/AuthContext";
 
 const Card = ({ children, className = "" }) => (
   <div className={`rounded-lg bg-slate-800 p-6 text-slate-200 ${className}`}>
@@ -23,23 +24,35 @@ const StatItem = ({ value, label }) => (
   </div>
 );
 
-const SettingsItem = ({ icon, label, children }) => {
+const SettingsItem = ({ icon, label, children, onClick }) => {
   const Icon = icon;
+  const Wrapper = onClick ? "button" : "div";
 
   return (
-    <div className="flex items-center justify-between text-slate-300">
+    <Wrapper
+      onClick={onClick}
+      className="flex w-full items-center justify-between rounded-md p-2 text-left text-slate-300 transition-colors hover:bg-slate-700/50"
+    >
       <div className="flex items-center gap-4">
         {Icon && <Icon className="h-5 w-5 text-slate-400" />}
         <span className="font-medium">{label}</span>
       </div>
       <div>{children}</div>
-    </div>
+    </Wrapper>
   );
 };
 
 const UserProfile = () => {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      logout();
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -72,15 +85,9 @@ const UserProfile = () => {
     fetchProfile();
   }, []);
 
-  if (isLoading) {
+  if (isLoading || !profile) {
     return (
       <div className="p-10 text-center text-white">Loading profile...</div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="p-10 text-center text-white">Could not load profile.</div>
     );
   }
 
@@ -171,7 +178,7 @@ const UserProfile = () => {
               <SettingsIcon className="h-6 w-6 text-slate-400" />
               <h2 className="text-lg font-bold">Settings</h2>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-400">
                   Daily Focus Goal (hours)
@@ -184,7 +191,11 @@ const UserProfile = () => {
                 />
               </div>
               <SettingsItem icon={LockIcon} label="Change Password" />
-              <SettingsItem icon={LogoutIcon} label="Log out" />
+              <SettingsItem
+                icon={LogoutIcon}
+                label="Log out"
+                onClick={handleLogout}
+              />
             </div>
           </Card>
         </motion.div>
