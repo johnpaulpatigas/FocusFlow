@@ -145,7 +145,7 @@ const TaskManagement = () => {
       ),
     );
     try {
-      await apiClient.put(`/tasks/${taskId}`, { status: newStatus });
+      await apiClient.patch(`/tasks/${taskId}/status`, { status: newStatus });
     } catch (error) {
       console.error("Failed to update task status:", error);
     }
