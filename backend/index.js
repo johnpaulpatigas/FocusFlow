@@ -196,6 +196,30 @@ app.put("/tasks/:id", authMiddleware, async (req, res) => {
   return res.status(200).json(data[0]);
 });
 
+app.patch("/tasks/:id/status", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ error: "Status is required." });
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ status })
+    .eq("id", id)
+    .eq("user_id", req.user.id)
+    .select();
+
+  if (error) return res.status(400).json({ error: error.message });
+  if (!data || data.length === 0)
+    return res
+      .status(404)
+      .json({ error: "Task not found or permission denied." });
+
+  return res.status(200).json(data[0]);
+});
+
 app.delete("/tasks/:id", authMiddleware, async (req, res) => {
   const { id } = req.params;
 
