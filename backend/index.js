@@ -77,6 +77,33 @@ app.post("/login", async (req, res) => {
   return res.status(200).json({ session: data.session });
 });
 
+// --- OAuth Endpoint for WEB BROWSER ---
+app.get("/auth/google", async (req, res) => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: "http://localhost:5173/dashboard",
+    },
+  });
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.status(200).json({ url: data.url });
+});
+
+// --- OAuth Endpoint for NATIVE MOBILE ---
+app.post("/auth/google/native", async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken) return res.status(400).json({ error: "idToken is required." });
+
+  const { data, error } = await supabase.auth.signInWithIdToken({
+    provider: "google",
+    token: idToken,
+  });
+
+  if (error) return res.status(400).json({ error: error.message });
+  return res.status(200).json({ session: data.session });
+});
+
 // =============================================
 // --- PROTECTED API ENDPOINTS ---
 // =============================================
