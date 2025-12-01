@@ -77,6 +77,28 @@ app.post("/login", async (req, res) => {
   return res.status(200).json({ session: data.session });
 });
 
+// In-App Password Update
+app.put("/auth/password", authMiddleware, async (req, res) => {
+  const { newPassword } = req.body;
+
+  if (!newPassword || newPassword.length < 6) {
+    return res
+      .status(400)
+      .json({ error: "New password must be at least 6 characters long." });
+  }
+
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    console.error("Password update error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  return res.status(200).json({ message: "Password updated successfully." });
+});
+
 // --- OAuth Endpoint for WEB BROWSER ---
 app.get("/auth/google", async (req, res) => {
   const { data, error } = await supabase.auth.signInWithOAuth({
