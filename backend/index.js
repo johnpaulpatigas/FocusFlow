@@ -9,14 +9,17 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 
+// --- Middleware ---
 app.use(cors());
 app.use(express.json());
 
+// --- Supabase Client ---
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY,
 );
 
+// --- Auth Middleware ---
 const authMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
@@ -33,6 +36,11 @@ const authMiddleware = async (req, res, next) => {
   next();
 };
 
+// =============================================
+// --- AUTHENTICATION ENDPOINTS ---
+// =============================================
+
+// Standard Email/Password Signup
 app.post("/signup", async (req, res) => {
   const { email, password, firstName, lastName } = req.body;
 
@@ -57,6 +65,7 @@ app.post("/signup", async (req, res) => {
   return res.status(201).json(authData);
 });
 
+// Standard Email/Password Login
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -68,6 +77,11 @@ app.post("/login", async (req, res) => {
   return res.status(200).json({ session: data.session });
 });
 
+// =============================================
+// --- PROTECTED API ENDPOINTS ---
+// =============================================
+
+// --- Profile ---
 app.get("/profile", authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from("profiles")
@@ -85,49 +99,7 @@ app.get("/profile", authMiddleware, async (req, res) => {
   return res.status(200).json(profileData);
 });
 
-app.get("/dashboard-stats", authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const today = new Date().toISOString().split("T")[0];
-
-    const { count: tasksDueToday, error: tasksError } = await supabase
-      .from("tasks")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("deadline", today)
-      .neq("status", "Completed");
-
-    const { data: upcomingTasks, error: upcomingError } = await supabase
-      .from("tasks")
-      .select("name, deadline")
-      .eq("user_id", userId)
-      .neq("status", "Completed")
-      .order("deadline", { ascending: true })
-      .limit(2);
-
-    const { data: weeklyFocusData, error: weeklyFocusError } =
-      await supabase.rpc("get_weekly_focus_hours", { user_id_param: userId });
-
-    const { data: streak, error: streakError } = await supabase.rpc(
-      "calculate_streak",
-      { user_id_param: userId },
-    );
-
-    if (tasksError || upcomingError || weeklyFocusError || streakError) {
-      throw tasksError || upcomingError || weeklyFocusError || streakError;
-    }
-
-    return res.status(200).json({
-      tasksDueToday: tasksDueToday || 0,
-      upcomingTasks: upcomingTasks || [],
-      currentStreak: streak || 0,
-      weeklyFocusHours: weeklyFocusData || [],
-    });
-  } catch (error) {
-    return res.status(400).json({ error: error.message });
-  }
-});
-
+// --- Tasks ---
 app.get("/tasks", authMiddleware, async (req, res) => {
   const { status } = req.query;
 
@@ -234,6 +206,7 @@ app.delete("/tasks/:id", authMiddleware, async (req, res) => {
   return res.status(204).send();
 });
 
+// --- Focus Sessions ---
 app.post("/focus-sessions", authMiddleware, async (req, res) => {
   const { duration_minutes, task_id } = req.body;
 
@@ -258,6 +231,50 @@ app.post("/focus-sessions", authMiddleware, async (req, res) => {
   }
 
   return res.status(201).json(data[0]);
+});
+
+// --- Stats ---
+app.get("/dashboard-stats", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const today = new Date().toISOString().split("T")[0];
+
+    const { count: tasksDueToday, error: tasksError } = await supabase
+      .from("tasks")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("deadline", today)
+      .neq("status", "Completed");
+
+    const { data: upcomingTasks, error: upcomingError } = await supabase
+      .from("tasks")
+      .select("name, deadline")
+      .eq("user_id", userId)
+      .neq("status", "Completed")
+      .order("deadline", { ascending: true })
+      .limit(2);
+
+    const { data: weeklyFocusData, error: weeklyFocusError } =
+      await supabase.rpc("get_weekly_focus_hours", { user_id_param: userId });
+
+    const { data: streak, error: streakError } = await supabase.rpc(
+      "calculate_streak",
+      { user_id_param: userId },
+    );
+
+    if (tasksError || upcomingError || weeklyFocusError || streakError) {
+      throw tasksError || upcomingError || weeklyFocusError || streakError;
+    }
+
+    return res.status(200).json({
+      tasksDueToday: tasksDueToday || 0,
+      upcomingTasks: upcomingTasks || [],
+      currentStreak: streak || 0,
+      weeklyFocusHours: weeklyFocusData || [],
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
 });
 
 app.get("/progress-stats", authMiddleware, async (req, res) => {
