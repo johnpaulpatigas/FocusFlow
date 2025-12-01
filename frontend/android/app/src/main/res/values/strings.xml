@@ -4,4 +4,5 @@
     <string name="title_activity_main">FocusFlow</string>
     <string name="package_name">com.johnpaulpatigas.focusflow</string>
     <string name="custom_url_scheme">com.johnpaulpatigas.focusflow</string>
+    <string name="server_client_id">1024056766874-0kim8lti74c6r58phmp8kbhk4ju9n0su.apps.googleusercontent.com</string>
 </resources>
