@@ -25,20 +25,25 @@ const TaskItem = ({ title, date }) => (
   </div>
 );
 
-const ChartBar = ({ day, hours, maxHours, percentage }) => (
-  <div className="flex flex-col items-center gap-2">
-    <div className="text-xs text-slate-400">
-      {hours.toFixed(1)} / {maxHours}h
+const ChartBar = ({ day, hours, dailyGoalHours }) => {
+  const percentage = dailyGoalHours > 0 ? (hours / dailyGoalHours) * 100 : 0;
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="text-xs text-slate-400">
+        {hours.toFixed(1)} / {dailyGoalHours.toFixed(1)}h
+      </div>
+      <div className="flex h-40 w-full items-end overflow-hidden rounded-md bg-slate-700">
+        <motion.div
+          className="w-full bg-cyan-500"
+          initial={{ height: 0 }}
+          animate={{ height: `${Math.min(percentage, 100)}%` }}
+          transition={{ type: "spring", stiffness: 100 }}
+        />
+      </div>
+      <p className="font-medium text-slate-300">{day}</p>
     </div>
-    <div className="flex h-40 w-full items-end overflow-hidden rounded-md bg-slate-700">
-      <div
-        className="w-full bg-cyan-500"
-        style={{ height: `${percentage}%` }}
-      ></div>
-    </div>
-    <p className="font-medium text-slate-300">{day}</p>
-  </div>
-);
+  );
+};
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
@@ -59,32 +64,15 @@ const Dashboard = () => {
     fetchStats();
   }, []);
 
-  if (isLoading) {
+  if (isLoading || !stats) {
     return (
-      <div className="p-10 text-center text-white">Loading dashboard...</div>
-    );
-  }
-
-  if (!stats) {
-    return (
-      <div className="p-10 text-center text-white">
-        Could not load dashboard data. Please try again later.
+      <div className="flex-1 p-10 text-center text-white">
+        {isLoading ? "Loading dashboard..." : "Could not load dashboard data."}
       </div>
     );
   }
 
-  const formatChartData = (weeklyData) => {
-    return weeklyData.map((d) => ({
-      day: d.day_of_week,
-      hours: d.total_minutes / 60,
-      maxHours: 4,
-      get percentage() {
-        return (this.hours / this.maxHours) * 100;
-      },
-    }));
-  };
-
-  const chartData = formatChartData(stats.weeklyFocusHours);
+  const dailyGoalHours = (stats.dailyGoalMinutes || 0) / 60;
 
   return (
     <main className="flex-1 overflow-y-auto p-6 text-white md:p-10">
@@ -125,9 +113,9 @@ const Dashboard = () => {
         </div>
         <div className="space-y-3">
           {stats.upcomingTasks.length > 0 ? (
-            stats.upcomingTasks.map((task) => (
+            stats.upcomingTasks.map((task, index) => (
               <TaskItem
-                key={task.name}
+                key={task.name + index}
                 title={task.name}
                 date={task.deadline}
               />
@@ -152,13 +140,12 @@ const Dashboard = () => {
       >
         <h2 className="mb-6 text-xl font-semibold">Weekly Focus Hours</h2>
         <div className="grid grid-cols-7 gap-4">
-          {chartData.map((d) => (
+          {stats.weeklyFocusHours.map((d) => (
             <ChartBar
-              key={d.day}
-              day={d.day}
-              hours={d.hours}
-              maxHours={d.maxHours}
-              percentage={d.percentage}
+              key={d.day_of_week}
+              day={d.day_of_week}
+              hours={d.total_minutes / 60}
+              dailyGoalHours={dailyGoalHours}
             />
           ))}
         </div>
