@@ -134,7 +134,9 @@ app.post("/auth/google/native", async (req, res) => {
 app.get("/profile", authMiddleware, async (req, res) => {
   const { data, error } = await supabase
     .from("profiles")
-    .select("first_name, last_name, study_year, major, avatar_url")
+    .select(
+      "first_name, last_name, study_year, major, avatar_url, daily_goal_minutes",
+    )
     .eq("id", req.user.id)
     .single();
 
@@ -146,6 +148,30 @@ app.get("/profile", authMiddleware, async (req, res) => {
   };
 
   return res.status(200).json(profileData);
+});
+
+app.put("/profile", authMiddleware, async (req, res) => {
+  const { firstName, lastName, studyYear, major, dailyGoalMinutes } = req.body;
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      first_name: firstName,
+      last_name: lastName,
+      study_year: studyYear,
+      major: major,
+      daily_goal_minutes: dailyGoalMinutes,
+    })
+    .eq("id", req.user.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Profile update error:", error);
+    return res.status(400).json({ error: error.message });
+  }
+
+  return res.status(200).json(data);
 });
 
 // --- Tasks ---
@@ -311,8 +337,26 @@ app.get("/dashboard-stats", authMiddleware, async (req, res) => {
       { user_id_param: userId },
     );
 
-    if (tasksError || upcomingError || weeklyFocusError || streakError) {
-      throw tasksError || upcomingError || weeklyFocusError || streakError;
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("daily_goal_minutes")
+      .eq("id", userId)
+      .single();
+
+    if (
+      tasksError ||
+      upcomingError ||
+      weeklyFocusError ||
+      streakError ||
+      profileError
+    ) {
+      throw (
+        tasksError ||
+        upcomingError ||
+        weeklyFocusError ||
+        streakError ||
+        profileError
+      );
     }
 
     return res.status(200).json({
@@ -320,6 +364,7 @@ app.get("/dashboard-stats", authMiddleware, async (req, res) => {
       upcomingTasks: upcomingTasks || [],
       currentStreak: streak || 0,
       weeklyFocusHours: weeklyFocusData || [],
+      dailyGoalMinutes: profile?.daily_goal_minutes || 240,
     });
   } catch (error) {
     return res.status(400).json({ error: error.message });
