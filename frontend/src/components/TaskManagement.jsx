@@ -1,13 +1,14 @@
 // src/components/TaskManagement.jsx
 /* eslint-disable no-unused-vars */
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
+import CheckIcon from "../assets/icons/check.svg?react";
+import ClockIcon from "../assets/icons/clock.svg?react";
 import FocusIcon from "../assets/icons/focus.svg?react";
-import TrashIcon from "../assets/icons/trash.svg?react";
 import AddTaskModal from "./AddTaskModal";
-import Checkbox from "./Checkbox";
+import ConfirmCompleteModal from "./ConfirmCompleteModal";
 import TaskActionsDropdown from "./TaskActionsDropdown";
 
 const PriorityBadge = ({ priority }) => {
@@ -25,13 +26,15 @@ const PriorityBadge = ({ priority }) => {
   );
 };
 
-const TaskRow = ({ task, onUpdateStatus, onEdit, onDelete }) => {
+const TaskRow = ({ task, onConfirmCompletion, onEdit, onDelete }) => {
   const navigate = useNavigate();
   const isCompleted = task.status === "Completed";
 
-  const handleCheckboxChange = () => {
-    const newStatus = isCompleted ? "Pending" : "Completed";
-    onUpdateStatus(task.id, newStatus);
+  const formatMinutes = (minutes) => {
+    if (!minutes) return `0 min`;
+    if (minutes < 60) return `${minutes} min`;
+    const hours = (minutes / 60).toFixed(1);
+    return `${hours}h`;
   };
 
   const handleStartFocus = () => {
@@ -39,43 +42,66 @@ const TaskRow = ({ task, onUpdateStatus, onEdit, onDelete }) => {
   };
 
   return (
-    <div
-      className={`grid grid-cols-12 items-center gap-4 border-b border-slate-700 p-4 last:border-b-0 ${isCompleted ? "opacity-50" : ""}`}
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -50, height: 0, padding: 0, margin: 0, border: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
     >
-      <div className="col-span-12 flex items-center gap-4 md:col-span-4">
-        <Checkbox checked={isCompleted} onChange={handleCheckboxChange} />
-        <span
-          className={`truncate text-slate-200 ${isCompleted ? "line-through" : ""}`}
-        >
-          {task.name}
-        </span>
-      </div>
-      <div className="col-span-6 text-slate-400 md:col-span-2">
-        {task.deadline}
-      </div>
-      <div className="col-span-6 md:col-span-2">
-        <PriorityBadge priority={task.priority} />
-      </div>
-      <div className="col-span-6 text-slate-400 md:col-span-2">
-        {task.category}
-      </div>
-      <div className="col-span-5 text-slate-400 md:col-span-1">
-        {task.status}
-      </div>
-      <div className="col-span-1 flex justify-end gap-2 text-right">
-        <button
-          onClick={handleStartFocus}
-          className="p-1 text-slate-400 transition-colors hover:text-cyan-400"
-          title="Start focus session for this task"
-        >
-          <FocusIcon className="h-5 w-5" />
-        </button>
-        <TaskActionsDropdown
-          onEdit={() => onEdit(task)}
-          onDelete={() => onDelete(task.id)}
-        />
-      </div>
-    </div>
+      <motion.div
+        animate={{ opacity: isCompleted ? 0.5 : 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="grid grid-cols-12 items-center gap-4 border-b border-slate-700 p-4 last:border-b-0"
+      >
+        <div className="col-span-12 flex items-center gap-4 md:col-span-4">
+          {!isCompleted ? (
+            <button
+              onClick={() => onConfirmCompletion(task)}
+              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-slate-500 transition-colors hover:border-cyan-400"
+              title="Complete task"
+            />
+          ) : (
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500">
+              <CheckIcon className="h-3 w-3 text-white" />
+            </div>
+          )}
+          <span
+            className={`truncate text-slate-200 ${isCompleted ? "line-through" : ""}`}
+          >
+            {task.name}
+          </span>
+        </div>
+        <div className="col-span-6 flex items-center gap-2 text-slate-400 md:col-span-2">
+          <ClockIcon className="h-4 w-4 shrink-0 text-slate-500" />
+          <span>{formatMinutes(task.total_focus_minutes)}</span>
+        </div>
+        <div className="col-span-6 md:col-span-2">
+          <PriorityBadge priority={task.priority} />
+        </div>
+        <div className="col-span-6 text-slate-400 md:col-span-1">
+          {task.category}
+        </div>
+        <div className="col-span-5 text-slate-400 md:col-span-1">
+          {task.status}
+        </div>
+        <div className="col-span-1 flex items-center justify-end gap-2 text-right">
+          {!isCompleted && (
+            <button
+              onClick={handleStartFocus}
+              className="p-1 text-slate-400 transition-colors hover:text-cyan-400"
+              title="Start focus session"
+            >
+              <FocusIcon className="h-5 w-5" />
+            </button>
+          )}
+          <TaskActionsDropdown
+            onEdit={() => onEdit(task)}
+            onDelete={() => onDelete(task.id)}
+          />
+        </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -107,9 +133,13 @@ const TaskManagement = () => {
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [taskToComplete, setTaskToComplete] = useState(null);
 
   const categories = useMemo(
-    () => ["All", ...new Set(tasks.map((task) => task.category))],
+    () => [
+      "All",
+      ...new Set(tasks.map((task) => task.category).filter(Boolean)),
+    ],
     [tasks],
   );
 
@@ -138,17 +168,19 @@ const TaskManagement = () => {
     });
   }, [tasks, statusFilter, categoryFilter]);
 
-  const handleUpdateStatus = async (taskId, newStatus) => {
+  const handleTaskCompleted = (taskId, minutesToAdd) => {
     setTasks((currentTasks) =>
       currentTasks.map((task) =>
-        task.id === taskId ? { ...task, status: newStatus } : task,
+        task.id === taskId
+          ? {
+              ...task,
+              status: "Completed",
+              total_focus_minutes:
+                (task.total_focus_minutes || 0) + minutesToAdd,
+            }
+          : task,
       ),
     );
-    try {
-      await apiClient.patch(`/tasks/${taskId}/status`, { status: newStatus });
-    } catch (error) {
-      console.error("Failed to update task status:", error);
-    }
   };
 
   const handleTaskUpdated = (updatedTask) => {
@@ -158,20 +190,8 @@ const TaskManagement = () => {
       ),
     );
   };
-
-  const openAddTaskModal = () => {
-    setTaskToEdit(null);
-    setIsModalOpen(true);
-  };
-
-  const openEditTaskModal = (task) => {
-    setTaskToEdit(task);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setTaskToEdit(null);
+  const handleTaskAdded = (newTask) => {
+    setTasks((currentTasks) => [newTask, ...currentTasks]);
   };
 
   const handleDeleteTask = async (taskId) => {
@@ -187,16 +207,27 @@ const TaskManagement = () => {
     }
   };
 
-  const handleTaskAdded = (newTask) => {
-    setTasks([newTask, ...tasks]);
+  const openAddTaskModal = () => {
+    setTaskToEdit(null);
+    setIsModalOpen(true);
   };
+  const openEditTaskModal = (task) => {
+    setTaskToEdit(task);
+    setIsModalOpen(true);
+  };
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setTaskToEdit(null);
+  };
+  const openConfirmModal = (task) => setTaskToComplete(task);
+  const closeConfirmModal = () => setTaskToComplete(null);
 
   return (
     <>
       <main className="flex-1 overflow-y-auto p-6 text-white md:p-10">
         <div className="mb-8 flex flex-col items-start justify-between sm:flex-row">
           <h1 className="mb-4 text-3xl font-bold text-slate-100 sm:mb-0">
-            Tasks
+            Task Management
           </h1>
           <button
             onClick={openAddTaskModal}
@@ -207,10 +238,9 @@ const TaskManagement = () => {
         </div>
 
         <motion.div
+          layout
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           className="rounded-lg bg-slate-800 p-4 sm:p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
         >
           <div className="mb-2 flex flex-col items-center justify-between gap-4 md:flex-row">
             <h2 className="self-start text-xl font-semibold text-slate-200 md:self-center">
@@ -246,30 +276,39 @@ const TaskManagement = () => {
           <div>
             <div className="hidden grid-cols-12 gap-4 border-b-2 border-slate-700 p-4 font-semibold text-slate-400 md:grid">
               <div className="col-span-4">Task Name</div>
-              <div className="col-span-2">Deadline</div>
+              <div className="col-span-2">Focus Time</div>
               <div className="col-span-2">Priority</div>
-              <div className="col-span-2">Category</div>
+              <div className="col-span-1">Category</div>
               <div className="col-span-1">Status</div>
-              <div className="col-span-1"></div>
+              <div className="col-span-2"></div>
             </div>
 
             <div>
               {isLoading ? (
                 <p className="p-4 text-center">Loading tasks...</p>
-              ) : filteredTasks.length > 0 ? (
-                filteredTasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    onUpdateStatus={handleUpdateStatus}
-                    onEdit={openEditTaskModal}
-                    onDelete={handleDeleteTask}
-                  />
-                ))
               ) : (
-                <p className="p-8 text-center text-slate-400">
-                  No tasks match the current filters.
-                </p>
+                <AnimatePresence>
+                  {filteredTasks.length > 0 ? (
+                    filteredTasks.map((task) => (
+                      <TaskRow
+                        key={task.id}
+                        task={task}
+                        onConfirmCompletion={openConfirmModal}
+                        onEdit={openEditTaskModal}
+                        onDelete={handleDeleteTask}
+                      />
+                    ))
+                  ) : (
+                    <motion.p
+                      key="empty-state"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="p-8 text-center text-slate-400"
+                    >
+                      No tasks match the current filters.
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               )}
             </div>
           </div>
@@ -282,6 +321,12 @@ const TaskManagement = () => {
         onTaskAdded={handleTaskAdded}
         onTaskUpdated={handleTaskUpdated}
         taskToEdit={taskToEdit}
+      />
+      <ConfirmCompleteModal
+        isOpen={!!taskToComplete}
+        onClose={closeConfirmModal}
+        task={taskToComplete}
+        onTaskCompleted={handleTaskCompleted}
       />
     </>
   );
