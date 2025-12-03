@@ -176,17 +176,15 @@ app.put("/profile", authMiddleware, async (req, res) => {
 
 // --- Tasks ---
 app.get("/tasks", authMiddleware, async (req, res) => {
-  const { status } = req.query;
+  const { data, error } = await supabase.rpc("get_tasks_with_focus_time", {
+    user_id_param: req.user.id,
+  });
 
-  let query = supabase.from("tasks").select("*").eq("user_id", req.user.id);
-
-  if (status) {
-    query = query.eq("status", status);
+  if (error) {
+    console.error("Error fetching tasks with focus time:", error);
+    return res.status(400).json({ error: error.message });
   }
 
-  const { data, error } = await query.order("created_at", { ascending: false });
-
-  if (error) return res.status(400).json({ error: error.message });
   return res.status(200).json(data);
 });
 
