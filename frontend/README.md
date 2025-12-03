@@ -1,16 +1,64 @@
-# React + Vite
+# FocusFlow Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend for the FocusFlow application, a productivity tool designed to help you manage tasks and stay focused. It's built with React, Vite, and Tailwind CSS, and it's designed to be a fully responsive single-page application (SPA). It is also configured to be deployed as a native mobile app using Capacitor.
 
-Currently, two official plugins are available:
+## Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
 
-## React Compiler
+-   Node.js (v18 or higher recommended)
+-   A running instance of the [FocusFlow API](../backend)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Installation and Setup
 
-## Expanding the ESLint configuration
+1.  **Clone the repository and install dependencies:**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+    ```bash
+    git clone https://github.com/your-username/focusflow.git
+    cd focusflow/frontend
+    npm install
+    ```
+
+2.  **Set up environment variables:**
+
+    Create a `.env` file in the `frontend` directory and add the URL of your backend API.
+
+    ```
+    VITE_API_URL=http://localhost:3001
+    ```
+
+### Available Scripts
+
+-   **Development:**
+    ```bash
+    npm run dev
+    ```
+    Starts the development server with hot-reloading.
+
+-   **Production Build:**
+    ```bash
+    npm run build
+    ```
+    Bundles the app for production.
+
+-   **Linting:**
+    ```bash
+    npm run lint
+    ```
+    Lints the source code using ESLint.
+
+-   **Preview Production Build:**
+    ```bash
+    npm run preview
+    ```
+    Serves the production build locally for previewing.
+
+## Core Technologies
+
+-   **React**: A JavaScript library for building user interfaces.
+-   **Vite**: A fast build tool and development server.
+-   **Tailwind CSS**: A utility-first CSS framework for rapid UI development.
+-   **Capacitor**: A tool for building cross-platform mobile apps with web technologies.
+-   **React Router**: For client-side routing.
+-   **Axios**: For making HTTP requests to the backend API.
+-   **ESLint**: For code linting and maintaining code quality.
