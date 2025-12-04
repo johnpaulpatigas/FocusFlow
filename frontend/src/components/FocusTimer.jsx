@@ -55,8 +55,12 @@ const FocusTimer = () => {
     if (!selectedTask) {
       const fetchPendingTasks = async () => {
         try {
-          const { data } = await apiClient.get("/tasks?status=Pending");
-          setAvailableTasks(data);
+          const { data } = await apiClient.get("/tasks");
+          const focusableTasks = data.filter(
+            (task) =>
+              task.status === "Pending" || task.status === "In Progress",
+          );
+          setAvailableTasks(focusableTasks);
         } catch (error) {
           console.error("Failed to fetch pending tasks:", error);
         } finally {
