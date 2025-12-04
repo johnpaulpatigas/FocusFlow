@@ -7,7 +7,11 @@ const RouteGuard = ({
   requireAuth = false,
   redirectIfAuth = false,
 }) => {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return null;
+  }
 
   if (requireAuth && !session) {
     return <Navigate to="/" replace />;

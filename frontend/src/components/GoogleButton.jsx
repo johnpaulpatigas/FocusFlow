@@ -4,10 +4,9 @@ import { SocialLogin } from "@capgo/capacitor-social-login";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
 import GoogleIcon from "../assets/google-icon.svg";
-import { useAuth } from "../context/AuthContext";
+import { supabase } from "../context/AuthContext";
 
 const GoogleButton = ({ text }) => {
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleGoogleLogin = async () => {
@@ -23,7 +22,13 @@ const GoogleButton = ({ text }) => {
         });
 
         if (data.session) {
-          login(data.session);
+          const { error } = await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
+
+          if (error) throw error;
+
           navigate("/dashboard");
         }
       } catch (error) {
