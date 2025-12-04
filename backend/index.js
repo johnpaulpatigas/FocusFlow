@@ -440,6 +440,51 @@ app.get("/progress-stats", authMiddleware, async (req, res) => {
   }
 });
 
+app.get("/profile-stats", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { count: totalTasks, error: totalTasksError } = await supabase
+      .from("tasks")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    const { count: completedTasks, error: completedTasksError } = await supabase
+      .from("tasks")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "Completed");
+
+    const { data: focusData, error: focusDataError } = await supabase
+      .from("focus_sessions")
+      .select("duration_minutes")
+      .eq("user_id", userId);
+
+    if (totalTasksError || completedTasksError || focusDataError) {
+      throw totalTasksError || completedTasksError || focusDataError;
+    }
+
+    const totalFocusMinutes = focusData.reduce(
+      (sum, session) => sum + session.duration_minutes,
+      0,
+    );
+    const totalFocusHours = Math.round((totalFocusMinutes / 60) * 10) / 10;
+
+    const successRate =
+      totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    return res.status(200).json({
+      totalTasks: totalTasks || 0,
+      completedTasks: completedTasks || 0,
+      successRate: successRate,
+      focusHours: totalFocusHours,
+    });
+  } catch (error) {
+    console.error("Error fetching profile stats:", error.message);
+    return res.status(400).json({ error: error.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
