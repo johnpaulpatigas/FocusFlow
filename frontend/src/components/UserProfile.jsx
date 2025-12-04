@@ -73,6 +73,7 @@ const SettingsItem = ({
 
 const UserProfile = () => {
   const [profile, setProfile] = useState(null);
+  const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -98,17 +99,21 @@ const UserProfile = () => {
   };
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchAllData = async () => {
       try {
-        const response = await apiClient.get("/profile");
-        setProfile(response.data);
+        const [profileResponse, statsResponse] = await Promise.all([
+          apiClient.get("/profile"),
+          apiClient.get("/profile-stats"),
+        ]);
+        setProfile(profileResponse.data);
+        setStats(statsResponse.data);
       } catch (error) {
-        console.error("Failed to fetch profile:", error);
+        console.error("Failed to fetch profile page data:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchProfile();
+    fetchAllData();
   }, []);
 
   const handleProfileUpdate = (updatedProfile) => {
@@ -213,10 +218,13 @@ const UserProfile = () => {
             <Card>
               <h2 className="mb-6 text-lg font-bold">Profile Statistics</h2>
               <div className="grid grid-cols-2 gap-4 text-center md:grid-cols-4">
-                <StatItem value="42" label="Total Tasks" />
-                <StatItem value="36" label="Completed" />
-                <StatItem value="87%" label="Success Rate" />
-                <StatItem value="125" label="Focus Hours" />
+                <StatItem value={stats.totalTasks} label="Total Tasks" />
+                <StatItem value={stats.completedTasks} label="Completed" />
+                <StatItem
+                  value={`${stats.successRate}%`}
+                  label="Success Rate"
+                />
+                <StatItem value={stats.focusHours} label="Focus Hours" />
               </div>
             </Card>
           </motion.div>
