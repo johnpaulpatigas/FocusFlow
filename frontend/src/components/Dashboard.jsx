@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
+import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 
 const StatCard = ({ title, value, unit }) => (
   <div className="rounded-lg bg-slate-800 p-6">
@@ -65,11 +66,7 @@ const Dashboard = () => {
   }, []);
 
   if (isLoading || !stats) {
-    return (
-      <div className="flex-1 p-10 text-center text-white">
-        {isLoading ? "Loading dashboard..." : "Could not load dashboard data."}
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const dailyGoalHours = (stats.dailyGoalMinutes || 0) / 60;

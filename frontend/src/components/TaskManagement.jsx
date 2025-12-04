@@ -126,14 +126,17 @@ const FilterTabs = ({ currentFilter, onFilterChange }) => {
   );
 };
 
-const TaskManagement = () => {
-  const [tasks, setTasks] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+const TaskManagement = ({ initialTasks, onTasksChange }) => {
+  const [tasks, setTasks] = useState(initialTasks);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [taskToComplete, setTaskToComplete] = useState(null);
+
+  useEffect(() => {
+    onTasksChange(tasks);
+  }, [tasks, onTasksChange]);
 
   const categories = useMemo(
     () => [
@@ -142,21 +145,6 @@ const TaskManagement = () => {
     ],
     [tasks],
   );
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await apiClient.get("/tasks");
-        setTasks(response.data);
-      } catch (error) {
-        console.error("Failed to fetch tasks:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTasks();
-  }, []);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
@@ -284,32 +272,28 @@ const TaskManagement = () => {
             </div>
 
             <div>
-              {isLoading ? (
-                <p className="p-4 text-center">Loading tasks...</p>
-              ) : (
-                <AnimatePresence>
-                  {filteredTasks.length > 0 ? (
-                    filteredTasks.map((task) => (
-                      <TaskRow
-                        key={task.id}
-                        task={task}
-                        onConfirmCompletion={openConfirmModal}
-                        onEdit={openEditTaskModal}
-                        onDelete={handleDeleteTask}
-                      />
-                    ))
-                  ) : (
-                    <motion.p
-                      key="empty-state"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="p-8 text-center text-slate-400"
-                    >
-                      No tasks match the current filters.
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              )}
+              <AnimatePresence>
+                {filteredTasks.length > 0 ? (
+                  filteredTasks.map((task) => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      onConfirmCompletion={openConfirmModal}
+                      onEdit={openEditTaskModal}
+                      onDelete={handleDeleteTask}
+                    />
+                  ))
+                ) : (
+                  <motion.p
+                    key="empty-state"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-8 text-center text-slate-400"
+                  >
+                    No tasks match the current filters.
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </motion.div>

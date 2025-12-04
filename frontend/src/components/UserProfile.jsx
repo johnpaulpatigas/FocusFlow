@@ -12,6 +12,7 @@ import SettingsIcon from "../assets/icons/settings.svg?react";
 import { useAuth } from "../context/AuthContext";
 import ChangePasswordModal from "./ChangePasswordModal";
 import EditProfileModal from "./EditProfileModal";
+import ProfilePageSkeleton from "../components/skeletons/ProfilePageSkeleton";
 
 const Card = ({ children, className = "" }) => (
   <div className={`rounded-lg bg-slate-800 p-6 text-slate-200 ${className}`}>
@@ -127,9 +128,7 @@ const UserProfile = () => {
   };
 
   if (isLoading || !profile) {
-    return (
-      <div className="p-10 text-center text-white">Loading profile...</div>
-    );
+    return <ProfilePageSkeleton />;
   }
 
   return (

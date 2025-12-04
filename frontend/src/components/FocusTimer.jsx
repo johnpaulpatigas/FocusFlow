@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
 import BellOffIcon from "../assets/icons/bell-off.svg?react";
 import BellIcon from "../assets/icons/bell.svg?react";
+import FocusPageSkeleton from "./skeletons/FocusPageSkeleton";
 
 const DEFAULT_MINUTES = 25;
 const DEFAULT_SECONDS = 0;
@@ -53,6 +54,7 @@ const FocusTimer = () => {
 
   useEffect(() => {
     if (!selectedTask) {
+      setIsLoadingTasks(true);
       const fetchPendingTasks = async () => {
         try {
           const { data } = await apiClient.get("/tasks");
@@ -133,6 +135,10 @@ const FocusTimer = () => {
   };
 
   if (!selectedTask) {
+    if (isLoadingTasks) {
+      return <FocusPageSkeleton />;
+    }
+
     return (
       <main className="flex-1 p-6 md:p-10">
         <h1 className="mb-8 text-3xl font-bold text-slate-100">Focus</h1>
@@ -140,9 +146,7 @@ const FocusTimer = () => {
           <h2 className="mb-4 text-xl font-semibold text-white">
             Select a task to focus on
           </h2>
-          {isLoadingTasks ? (
-            <p className="text-slate-400">Loading tasks...</p>
-          ) : availableTasks.length > 0 ? (
+          {availableTasks.length > 0 ? (
             <select
               onChange={(e) => handleTaskSelect(e.target.value)}
               defaultValue=""

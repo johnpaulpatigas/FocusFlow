@@ -1,12 +1,14 @@
 // src/pages/TaskPage.jsx
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import apiClient from "../api/axios";
 import MobileHeader from "../components/MobileHeader";
 import PageWrapper from "../components/PageWrapper";
 import Sidebar from "../components/Sidebar";
 import TaskManagement from "../components/TaskManagement";
+import TaskPageSkeleton from "../components/skeletons/TaskPageSkeleton";
 
 const sidebarVariants = {
   open: { x: 0 },
@@ -19,7 +21,30 @@ const overlayVariants = {
 
 const TaskPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const isInitialLoad = useRef(true);
   const location = useLocation();
+
+  useEffect(() => {
+    if (isInitialLoad.current) {
+      setIsLoading(true);
+    }
+
+    const fetchTasks = async () => {
+      try {
+        const response = await apiClient.get("/tasks");
+        setTasks(response.data);
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error);
+      } finally {
+        setIsLoading(false);
+        isInitialLoad.current = false;
+      }
+    };
+
+    fetchTasks();
+  }, [location]);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -57,7 +82,15 @@ const TaskPage = () => {
 
         <div className="flex flex-1 flex-col">
           <MobileHeader onMenuClick={toggleSidebar} />
-          <TaskManagement />
+          {isLoading && isInitialLoad.current ? (
+            <TaskPageSkeleton />
+          ) : (
+            <TaskManagement
+              key={location.key}
+              initialTasks={tasks}
+              onTasksChange={setTasks}
+            />
+          )}
         </div>
       </div>
     </PageWrapper>

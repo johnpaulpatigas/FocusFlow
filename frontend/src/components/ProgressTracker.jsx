@@ -7,6 +7,7 @@ import StreakIcon from "../assets/badges/3-day-streak.svg?react";
 import FocusStarterIcon from "../assets/badges/focus-starter.svg?react";
 import MarathonIcon from "../assets/badges/marathon-runner.svg?react";
 import TaskMasterIcon from "../assets/badges/task-master.svg?react";
+import ProgressPageSkeleton from "../components/skeletons/ProgressPageSkeleton";
 
 const CHART_Y_AXIS_MAX = 10;
 
@@ -76,9 +77,7 @@ const ProgressTracker = () => {
   }, []);
 
   if (isLoading || !stats) {
-    return (
-      <div className="p-10 text-center text-white">Loading progress...</div>
-    );
+    return <ProgressPageSkeleton />;
   }
 
   const barChartData = stats.weeklyFocusHours.map((d) => ({
