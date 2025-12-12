@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
 
@@ -18,6 +19,10 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY,
 );
+
+// --- Initialize Gemini ---
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
 // --- Auth Middleware ---
 const authMiddleware = async (req, res, next) => {
@@ -482,6 +487,44 @@ app.get("/profile-stats", authMiddleware, async (req, res) => {
   } catch (error) {
     console.error("Error fetching profile stats:", error.message);
     return res.status(400).json({ error: error.message });
+  }
+});
+
+// --- AI Insights Endpoint ---
+app.post("/get-insights", authMiddleware, async (req, res) => {
+  const { tasks, progressStats } = req.body;
+
+  let prompt =
+    "You are a friendly and encouraging productivity coach named 'Flow'. Based on the following user data, provide actionable insights and motivation. Keep your response concise, use markdown for formatting (like lists and bold text), and speak directly to the user.\n\n";
+
+  if (tasks && tasks.length > 0) {
+    prompt += "## Task Insights\nHere are my current pending tasks:\n";
+    tasks.forEach((task) => {
+      prompt += `- ${task.name} (Priority: ${task.priority}, Deadline: ${task.deadline || "N/A"})\n`;
+    });
+    prompt +=
+      "\nBased on these tasks, what should I prioritize and why? Give me a mini-plan.\n\n";
+  }
+
+  if (progressStats) {
+    prompt += "## Progress Insights\nHere are my stats for the last week:\n";
+    prompt += `- Study Streak: ${progressStats.studyStreak} days\n`;
+    prompt += `- Weekly Focus: ${JSON.stringify(progressStats.weeklyFocusHours)}\n`;
+    prompt += `- Tasks Completed: ${JSON.stringify(progressStats.tasksCompletedOverTime)}\n`;
+    prompt +=
+      "\nBased on my progress, what am I doing well and where can I improve? Be encouraging.\n\n";
+  }
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+    res.status(200).json({ insights: text });
+  } catch (error) {
+    console.error("Error generating AI insights:", error);
+    res
+      .status(500)
+      .json({ error: "Sorry, I couldn't generate insights at this time." });
   }
 });
 
