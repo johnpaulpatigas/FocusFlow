@@ -9,6 +9,7 @@ import ClockIcon from "../assets/icons/clock.svg?react";
 import FocusIcon from "../assets/icons/focus.svg?react";
 import AddTaskModal from "./AddTaskModal";
 import ConfirmCompleteModal from "./ConfirmCompleteModal";
+import InsightsModal from "./InsightsModal";
 import TaskActionsDropdown from "./TaskActionsDropdown";
 
 const PriorityBadge = ({ priority }) => {
@@ -133,6 +134,9 @@ const TaskManagement = ({ initialTasks, onTasksChange }) => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [taskToComplete, setTaskToComplete] = useState(null);
+  const [isInsightsModalOpen, setIsInsightsModalOpen] = useState(false);
+  const [insights, setInsights] = useState("");
+  const [isInsightsLoading, setIsInsightsLoading] = useState(false);
 
   useEffect(() => {
     onTasksChange(tasks);
@@ -210,6 +214,23 @@ const TaskManagement = ({ initialTasks, onTasksChange }) => {
   const openConfirmModal = (task) => setTaskToComplete(task);
   const closeConfirmModal = () => setTaskToComplete(null);
 
+  const handleGetInsights = async () => {
+    setIsInsightsModalOpen(true);
+    setIsInsightsLoading(true);
+    try {
+      const { data } = await apiClient.post("/get-insights", {
+        tasks: tasks.filter((t) => t.status === "Pending"),
+      });
+      setInsights(data.insights);
+    } catch (error) {
+      setInsights(
+        "Sorry, I couldn't generate insights right now. Please try again later.",
+      );
+    } finally {
+      setIsInsightsLoading(false);
+    }
+  };
+
   return (
     <>
       <main className="flex-1 overflow-y-auto p-6 text-white md:p-10">
@@ -217,12 +238,21 @@ const TaskManagement = ({ initialTasks, onTasksChange }) => {
           <h1 className="mb-4 text-3xl font-bold text-slate-100 sm:mb-0">
             Task Management
           </h1>
-          <button
-            onClick={openAddTaskModal}
-            className="rounded-lg bg-cyan-500 px-5 py-2 font-bold text-white transition-colors hover:bg-cyan-600"
-          >
-            Add Task
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={openAddTaskModal}
+              className="rounded-lg bg-cyan-500 px-5 py-2 font-bold text-white transition-colors hover:bg-cyan-600"
+            >
+              Add Task
+            </button>
+
+            <button
+              onClick={handleGetInsights}
+              className="flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 font-bold text-cyan-400 transition-colors hover:bg-slate-600"
+            >
+              Get Insights
+            </button>
+          </div>
         </div>
 
         <motion.div
@@ -311,6 +341,12 @@ const TaskManagement = ({ initialTasks, onTasksChange }) => {
         onClose={closeConfirmModal}
         task={taskToComplete}
         onTaskCompleted={handleTaskCompleted}
+      />
+      <InsightsModal
+        isOpen={isInsightsModalOpen}
+        onClose={() => setIsInsightsModalOpen(false)}
+        insights={insights}
+        isLoading={isInsightsLoading}
       />
     </>
   );

@@ -8,6 +8,7 @@ import FocusStarterIcon from "../assets/badges/focus-starter.svg?react";
 import MarathonIcon from "../assets/badges/marathon-runner.svg?react";
 import TaskMasterIcon from "../assets/badges/task-master.svg?react";
 import ProgressPageSkeleton from "../components/skeletons/ProgressPageSkeleton";
+import InsightsModal from "./InsightsModal";
 
 const CHART_Y_AXIS_MAX = 10;
 
@@ -61,6 +62,9 @@ const AchievementBadge = ({ Icon, title, isEarned }) => (
 const ProgressTracker = () => {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInsightsModalOpen, setIsInsightsModalOpen] = useState(false);
+  const [insights, setInsights] = useState("");
+  const [isInsightsLoading, setIsInsightsLoading] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -100,128 +104,167 @@ const ProgressTracker = () => {
     visible: { y: 0, opacity: 1 },
   };
 
+  const handleGetInsights = async () => {
+    setIsInsightsModalOpen(true);
+    setIsInsightsLoading(true);
+    try {
+      const { data } = await apiClient.post("/get-insights", {
+        progressStats: stats,
+      });
+      setInsights(data.insights);
+    } catch (error) {
+      setInsights(
+        "Sorry, I couldn't generate insights right now. Please try again later.",
+      );
+    } finally {
+      setIsInsightsLoading(false);
+    }
+  };
+
   return (
-    <main className="flex-1 p-6 md:p-10">
-      <motion.h1
-        className="mb-8 text-3xl font-bold text-slate-100"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        Progress
-      </motion.h1>
-
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 gap-8 lg:grid-cols-2"
-      >
-        <motion.div variants={itemVariants}>
-          <Card title="Hours Focused This Week">
-            <div className="flex h-64 justify-around gap-2 text-center text-xs text-slate-400">
-              {barChartData.map((d) => (
-                <div
-                  key={d.day}
-                  className="flex flex-1 flex-col items-center justify-end gap-2"
-                >
-                  <div className="text-sm text-white">
-                    {Math.round(d.value / 60)}h
-                  </div>
-                  <motion.div
-                    className="w-2/3 rounded-t-sm bg-cyan-500"
-                    initial={{ height: 0 }}
-                    animate={{ height: `${(d.value / 300) * 100}%` }}
-                    transition={{ type: "spring", stiffness: 100 }}
-                  />
-                  <span>{d.day}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
+    <>
+      <main className="flex-1 p-6 md:p-10">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="mb-8 flex items-center justify-between"
+        >
+          <motion.h1
+            variants={itemVariants}
+            className="text-3xl font-bold text-slate-100"
+          >
+            Progress
+          </motion.h1>
+          <motion.button
+            variants={itemVariants}
+            className="flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 font-bold text-cyan-400 transition-colors hover:bg-slate-600"
+            onClick={handleGetInsights}
+          >
+            Get Insights
+          </motion.button>
         </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <Card title="Tasks Completed Over Time">
-            <div className="flex h-64 text-xs text-slate-400">
-              <div className="flex h-full flex-col justify-between pr-2 text-right">
-                <span>{CHART_Y_AXIS_MAX}</span>
-                <span>{CHART_Y_AXIS_MAX / 2}</span>
-                <span>0</span>
-              </div>
-
-              <div className="flex grow flex-col border-l border-slate-700">
-                <div className="relative grow">
-                  {[25, 50, 75].map((y) => (
-                    <div
-                      key={y}
-                      className="absolute w-full border-t border-slate-700/50"
-                      style={{ bottom: `${y}%` }}
-                    />
-                  ))}
-
-                  <svg
-                    className="absolute inset-0 h-full w-full"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 gap-8 lg:grid-cols-2"
+        >
+          <motion.div variants={itemVariants}>
+            <Card title="Hours Focused This Week">
+              <div className="flex h-64 justify-around gap-2 text-center text-xs text-slate-400">
+                {barChartData.map((d) => (
+                  <div
+                    key={d.day}
+                    className="flex flex-1 flex-col items-center justify-end gap-2"
                   >
-                    <motion.path
-                      d={generatePathData(
-                        lineChartData,
-                        100,
-                        100,
-                        CHART_Y_AXIS_MAX,
-                      )}
-                      stroke="#A5B4FC"
-                      strokeWidth="2"
-                      fill="none"
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      animate={{ pathLength: 1, opacity: 1 }}
-                      transition={{ duration: 2, ease: "easeInOut" }}
+                    <div className="text-sm text-white">
+                      {Math.round(d.value / 60)}h
+                    </div>
+                    <motion.div
+                      className="w-2/3 rounded-t-sm bg-cyan-500"
+                      initial={{ height: 0 }}
+                      animate={{ height: `${(d.value / 300) * 100}%` }}
+                      transition={{ type: "spring", stiffness: 100 }}
                     />
-                  </svg>
+                    <span>{d.day}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <Card title="Tasks Completed Over Time">
+              <div className="flex h-64 text-xs text-slate-400">
+                <div className="flex h-full flex-col justify-between pr-2 text-right">
+                  <span>{CHART_Y_AXIS_MAX}</span>
+                  <span>{CHART_Y_AXIS_MAX / 2}</span>
+                  <span>0</span>
                 </div>
 
-                <div className="flex justify-around border-t border-slate-700 pt-2">
-                  {lineChartData.map((d) => (
-                    <span key={d.day}>{d.day}</span>
-                  ))}
+                <div className="flex grow flex-col border-l border-slate-700">
+                  <div className="relative grow">
+                    {[25, 50, 75].map((y) => (
+                      <div
+                        key={y}
+                        className="absolute w-full border-t border-slate-700/50"
+                        style={{ bottom: `${y}%` }}
+                      />
+                    ))}
+
+                    <svg
+                      className="absolute inset-0 h-full w-full"
+                      viewBox="0 0 100 100"
+                      preserveAspectRatio="none"
+                    >
+                      <motion.path
+                        d={generatePathData(
+                          lineChartData,
+                          100,
+                          100,
+                          CHART_Y_AXIS_MAX,
+                        )}
+                        stroke="#A5B4FC"
+                        strokeWidth="2"
+                        fill="none"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{ duration: 2, ease: "easeInOut" }}
+                      />
+                    </svg>
+                  </div>
+
+                  <div className="flex justify-around border-t border-slate-700 pt-2">
+                    {lineChartData.map((d) => (
+                      <span key={d.day}>{d.day}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card>
-        </motion.div>
+            </Card>
+          </motion.div>
 
-        <motion.div variants={itemVariants} className="lg:col-span-2">
-          <Card title="Study Streak">
-            <div className="py-8 text-center">
-              <p className="text-6xl font-bold text-white">
-                {stats.studyStreak} days
-              </p>
-              <p className="mt-2 text-slate-400">
-                {stats.studyStreak > 0
-                  ? `You've studied ${stats.studyStreak} days in a row! Keep it up!`
-                  : "Start a focus session to build your streak!"}
-              </p>
-            </div>
-          </Card>
-        </motion.div>
+          <motion.div variants={itemVariants} className="lg:col-span-2">
+            <Card title="Study Streak">
+              <div className="py-8 text-center">
+                <p className="text-6xl font-bold text-white">
+                  {stats.studyStreak} days
+                </p>
+                <p className="mt-2 text-slate-400">
+                  {stats.studyStreak > 0
+                    ? `You've studied ${stats.studyStreak} days in a row! Keep it up!`
+                    : "Start a focus session to build your streak!"}
+                </p>
+              </div>
+            </Card>
+          </motion.div>
 
-        <motion.div variants={itemVariants} className="lg:col-span-2">
-          <Card title="Achievement Badges">
-            <div className="grid grid-cols-2 gap-4 py-4 sm:grid-cols-4 sm:gap-8">
-              {allBadges.map((badge) => (
-                <AchievementBadge
-                  key={badge.id}
-                  Icon={badge.Icon}
-                  title={badge.title}
-                  isEarned={stats.earnedBadges.includes(badge.id)}
-                />
-              ))}
-            </div>
-          </Card>
+          <motion.div variants={itemVariants} className="lg:col-span-2">
+            <Card title="Achievement Badges">
+              <div className="grid grid-cols-2 gap-4 py-4 sm:grid-cols-4 sm:gap-8">
+                {allBadges.map((badge) => (
+                  <AchievementBadge
+                    key={badge.id}
+                    Icon={badge.Icon}
+                    title={badge.title}
+                    isEarned={stats.earnedBadges.includes(badge.id)}
+                  />
+                ))}
+              </div>
+            </Card>
+          </motion.div>
         </motion.div>
-      </motion.div>
-    </main>
+      </main>
+
+      <InsightsModal
+        isOpen={isInsightsModalOpen}
+        onClose={() => setIsInsightsModalOpen(false)}
+        insights={insights}
+        isLoading={isInsightsLoading}
+      />
+    </>
   );
 };
 
